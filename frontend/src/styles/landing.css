@@ -1,0 +1,147 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, sans-serif; background: #efefef; color: #111; }
+.landing-page { min-height: 100vh; }
+.landing-header { display: grid; grid-template-columns: 80px 1fr auto; align-items: center; gap: 20px; padding: 18px 24px; border-bottom: 1px solid #8a8a8a; background: #f3f3f3; }
+.menu-btn { font-size: 32px; text-align: center; }
+.search-wrap { display: flex; justify-content: center; }
+.search-input { width: 100%; max-width: 720px; padding: 14px 20px; border-radius: 24px; border: 1px solid #666; background: #f7f7f7; font-size: 18px; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.auth-btn,.lang-btn,.profile-btn,.reset-btn,.tab-btn { border: none; background: #d9d9d9; border-radius: 18px; padding: 12px 18px; cursor: pointer; font-size: 16px; }
+.landing-layout { display: grid; grid-template-columns: 310px 1fr; min-height: calc(100vh - 84px); }
+.filters-sidebar { padding: 20px 22px; border-right: 1px solid #8a8a8a; background: #ececec; }
+.filters-sidebar h3 { margin-top: 0; margin-bottom: 16px; text-align: center; font-size: 24px; }
+.filter-group { margin-bottom: 24px; }
+.filter-title { font-weight: bold; margin-bottom: 10px; }
+.filter-option { display: block; margin-bottom: 6px; }
+.reset-btn { width: 100%; margin-top: 18px; opacity: 0.75; }
+.landing-main { padding: 16px 18px 24px; }
+.landing-main h1 { text-align: center; font-size: 36px; font-weight: 500; margin: 0 0 22px; }
+.competition-tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #777; border-radius: 8px; overflow: hidden; margin-bottom: 26px; }
+.tab-btn { padding: 20px 14px; border-radius: 0; background: #d9d9d9; font-size: 20px; }
+.tab-btn.active { background: #adadad; }
+.competition-grid { display: grid; }
+.competition-grid.with-sidebar { grid-template-columns: 1fr 480px; gap: 18px; align-items: start; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: 26px; }
+.competition-card { background: #dcdcdc; border: 1px solid #666; border-radius: 10px; overflow: hidden; }
+.card-cover {
+  position: relative;
+  height: 205px;
+  background: #cfcfcf;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cover-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #c8c8c8, #b7b7b7); }
+.card-timer {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(110, 110, 110, 0.55);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  backdrop-filter: blur(3px);
+}
+.card-timer.danger { color: #ff3b30; }
+.card-body { border-top: 1px solid #777; padding: 10px 12px 12px; }
+.card-name { font-size: 17px; margin-bottom: 2px; }
+.card-round { font-size: 16px; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #777; padding: 12px; font-size: 16px; }
+.status-active {
+  color: #18b118;
+  font-weight: bold;
+}
+
+.status-finished {
+  color: #d93025;
+  font-weight: bold;
+}
+
+.status-judging {
+  color: #7e57c2;
+  font-weight: bold;
+}
+
+.status-archived {
+  color: #7d7d7d;
+  font-weight: bold;
+}
+
+.status-registration-open {
+  color: #ef6c00;
+  font-weight: bold;
+}
+
+.status-upcoming {
+  color: #1565c0;
+  font-weight: bold;
+}
+
+.status-default {
+  color: #333;
+  font-weight: bold;
+}
+.right-sidebar { display: flex; flex-direction: column; gap: 14px; }
+.right-panel-block { background: #d9d9d9; border-radius: 10px; padding: 18px; }
+.right-panel-block h3 { font-size: 28px; font-weight: 500; text-align: center; margin: 0 0 16px; }
+.last-competitions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.last-competition-banner {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 68px;
+  padding: 8px 10px;
+  background: #ececec;
+  border-radius: 10px;
+}
+
+.last-competition-banner-cover {
+  height: 52px;
+  border-radius: 8px;
+  background: #b8b8b8;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.last-competition-banner-content {
+  min-width: 0;
+}
+
+.last-competition-banner-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.last-competition-banner-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.sidebar-list { display: flex; flex-direction: column; gap: 16px; }
+.sidebar-card { display: grid; grid-template-columns: 185px 1fr; gap: 18px; align-items: center; }
+.sidebar-card-cover { height: 105px; background: #b3b3b3; border-radius: 8px; background-size: cover; background-position: center; background-repeat: no-repeat; }
+.sidebar-card-name { font-size: 18px; margin-bottom: 12px; }
+.sidebar-card-meta { display: flex; gap: 24px; font-size: 18px; }
+@media (max-width: 1200px) { .competition-grid.with-sidebar { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .landing-layout { grid-template-columns: 1fr; }
+  .filters-sidebar { border-right: none; border-bottom: 1px solid #8a8a8a; }
+  .competition-tabs { grid-template-columns: repeat(2, 1fr); }
+  .landing-header { grid-template-columns: 60px 1fr; }
+  .header-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}

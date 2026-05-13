@@ -5,6 +5,31 @@ from django.utils.text import slugify
 
 class Competition(models.Model):
     STATUS_CHOICES = [
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        ('upcoming', 'Upcoming'),
+        ('registration_open', 'Registration Open'),
+        ('active', 'Active'),
+        ('judging', 'Judging'),
+        ('finished', 'Finished'),
+        ('archived', 'Archived'),
+    ]
+    EVENT_TYPE_CHOICES = [('online', 'Online'), ('offline', 'Offline'), ('hybrid', 'Hybrid')]
+    PARTICIPATION_TYPE_CHOICES = [('team', 'Team'), ('individual', 'Individual')]
+    INDUSTRY_CHOICES = [
+        ('programming', 'Programming'),
+        ('design', 'Design'),
+        ('robotics', 'Robotics'),
+        ('cybersecurity', 'Cybersecurity'),
+    ]
+    DIFFICULTY_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+        ('mixed', 'Mixed'),
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         ("upcoming", "Upcoming"),
         ("registration_open", "Registration Open"),
         ("active", "Active"),
@@ -36,11 +61,28 @@ class Competition(models.Model):
         ("intermediate", "Intermediate"),
         ("advanced", "Advanced"),
         ("mixed", "Mixed"),
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     ]
 
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, blank=True)
     short_description = models.TextField(blank=True)
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    cover_image = models.URLField(blank=True)
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, db_index=True)
+    event_type = models.CharField(max_length=16, choices=EVENT_TYPE_CHOICES, db_index=True)
+    participation_type = models.CharField(max_length=16, choices=PARTICIPATION_TYPE_CHOICES, db_index=True)
+    industry = models.CharField(max_length=32, choices=INDUSTRY_CHOICES, db_index=True)
+    difficulty = models.CharField(max_length=32, choices=DIFFICULTY_CHOICES, db_index=True)
+    current_round = models.PositiveIntegerField(default=1)
+    total_rounds = models.PositiveIntegerField(default=1)
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     full_description = models.TextField(blank=True)
 
     cover_image = models.URLField(blank=True)
@@ -59,16 +101,40 @@ class Competition(models.Model):
     current_round = models.PositiveIntegerField(default=1)
     total_rounds = models.PositiveIntegerField(default=1)
 
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     participants_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     views_count = models.PositiveIntegerField(default=0)
     followers_count = models.PositiveIntegerField(default=0)
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+=======
+
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     is_live_stream_enabled = models.BooleanField(default=False)
     is_online_now = models.BooleanField(default=False)
     registration_open = models.BooleanField(default=False)
     submissions_open = models.BooleanField(default=False)
     is_public = models.BooleanField(default=True)
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    trending_score = models.FloatField(default=0)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    timer_deadline = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
     trending_score = models.FloatField(default=0)
 
@@ -81,12 +147,35 @@ class Competition(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+
+class UserSavedCompetition(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_competitions')
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='saved_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'competition')
+        ordering = ['-created_at']
+
+
+class UserCompetitionWatch(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='watched_competitions')
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='watchers')
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     def __str__(self):
         return self.name
 
@@ -129,6 +218,12 @@ class UserCompetitionWatch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        unique_together = ('user', 'competition')
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         unique_together = ("user", "competition")
 
     def __str__(self):
@@ -378,6 +473,3 @@ class CompetitionJudgingMetric(models.Model):
 
     class Meta:
         ordering = ["sort_order", "id"]
-
-    def __str__(self):
-        return f"{self.competition.name}: {self.label}={self.value}"

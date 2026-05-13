@@ -1,13 +1,20 @@
+<<<<<<< HEAD
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams, useSearchParams } from "react-router-dom";
 
 import Header from "../components/Header";
+=======
+import React, { useEffect, useState } from "react";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
+
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 import CompetitionHeader from "../components/competition/CompetitionHeader";
 import CompetitionSidebar from "../components/competition/CompetitionSidebar";
 import CompetitionTabs from "../components/competition/CompetitionTabs";
 import CompetitionTabContent from "../components/competition/CompetitionTabContent";
 import JoinCompetitionModal from "../components/competition/JoinCompetitionModal";
 
+<<<<<<< HEAD
 import { fetchCompetitions } from "../api/landingApi";
 
 function capitalize(value) {
@@ -134,6 +141,17 @@ export default function CompetitionPage() {
   const [showJoinModal, setShowJoinModal] = useState(
     searchParams.get("join") === "1"
   );
+=======
+export default function CompetitionPage() {
+  const { competitionId } = useParams();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [competition, setCompetition] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showJoinModal, setShowJoinModal] = useState(false);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "overview"
   );
@@ -146,6 +164,7 @@ export default function CompetitionPage() {
   }, [searchParams]);
 
   useEffect(() => {
+<<<<<<< HEAD
     setShowJoinModal(searchParams.get("join") === "1");
   }, [searchParams]);
 
@@ -155,10 +174,21 @@ export default function CompetitionPage() {
     let isMounted = true;
 
     async function loadCompetitionFallback() {
+=======
+    const shouldOpenJoin = searchParams.get("join") === "1";
+    setShowJoinModal(shouldOpenJoin);
+  }, [location.search, searchParams]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCompetition() {
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       try {
         setLoading(true);
         setError("");
 
+<<<<<<< HEAD
         const list = await fetchCompetitions({ tab: "trending" });
         const found = list.find((item) => String(item.id) === String(id));
 
@@ -168,6 +198,23 @@ export default function CompetitionPage() {
 
         if (isMounted) {
           setCompetition(buildMockCompetition(found));
+=======
+        const response = await fetch(
+          `http://localhost:8000/api/competitions/${competitionId}/`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load competition");
+        }
+
+        const data = await response.json();
+
+        if (isMounted) {
+          setCompetition(data);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         }
       } catch (err) {
         console.error(err);
@@ -181,12 +228,20 @@ export default function CompetitionPage() {
       }
     }
 
+<<<<<<< HEAD
     loadCompetitionFallback();
+=======
+    loadCompetition();
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
     return () => {
       isMounted = false;
     };
+<<<<<<< HEAD
   }, [id, location.state]);
+=======
+  }, [competitionId]);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -209,6 +264,7 @@ export default function CompetitionPage() {
     setSearchParams(nextParams);
   };
 
+<<<<<<< HEAD
   const handleCommentPost = () => {
     const text = commentText.trim();
     if (!text) return;
@@ -240,6 +296,8 @@ export default function CompetitionPage() {
     [competition]
   );
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   if (loading) {
     return <div className="competition-page-state">Loading competition...</div>;
   }
@@ -253,6 +311,7 @@ export default function CompetitionPage() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="landing-page">
       <Header />
 
@@ -285,11 +344,33 @@ export default function CompetitionPage() {
             </aside>
           </div>
         </div>
+=======
+    <div className="competition-page">
+      <CompetitionHeader competition={competition} onJoin={openJoinModal} />
+
+      <div className="competition-page-layout">
+        <main className="competition-main">
+          <CompetitionTabs activeTab={activeTab} onTabChange={handleTabChange} />
+
+          <CompetitionTabContent
+            activeTab={activeTab}
+            competitionId={competitionId}
+          />
+        </main>
+
+        <aside className="competition-aside">
+          <CompetitionSidebar competition={competition} />
+        </aside>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       </div>
 
       {showJoinModal && (
         <JoinCompetitionModal
+<<<<<<< HEAD
           competition={competition}
+=======
+          competitionId={competitionId}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
           onClose={closeJoinModal}
         />
       )}

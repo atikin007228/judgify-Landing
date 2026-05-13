@@ -1,8 +1,13 @@
 Django==5.1.6
 djangorestframework==3.15.2
 django-cors-headers==4.6.0
+<<<<<<< HEAD
 psycopg[binary]
 python-dotenv==1.0.1
 gunicorn
 dj-database-url
 whitenoise
+=======
+psycopg[binary]==3.2.3
+python-dotenv==1.0.1
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e

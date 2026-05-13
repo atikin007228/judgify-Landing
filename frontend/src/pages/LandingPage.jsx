@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +10,25 @@ import RightSidebar from "../components/RightSidebar";
 import SignUpModal from "../components/SignUpModal";
 import OnboardModal from "../components/auth/OnboardModal";
 
+=======
+import React, { useEffect, useMemo, useState } from 'react';
+import Header from '../components/Header';
+import FiltersSidebar from '../components/FiltersSidebar';
+import CompetitionTabs from '../components/CompetitionTabs';
+import CompetitionCard from '../components/CompetitionCard';
+import RightSidebar from '../components/RightSidebar';
+import { fetchCompetitions, fetchLandingFilters, fetchSidebar } from '../api/landingApi';
+
+const initialFilters = {
+  search: '',
+  tab: 'trending',
+  status: ['active'],
+  event_type: [],
+  participation_type: ['team'],
+  industry: ['programming'],
+  difficulty: ['mixed'],
+};
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 import {
   fetchCompetitions,
   fetchLandingFilters,
@@ -28,14 +48,24 @@ const initialFilters = {
 };
 
 export default function LandingPage() {
+<<<<<<< HEAD
   // const navigate = useNavigate();
   const { user, login, isAuthenticated } = useAuth();
 
+=======
+  const navigate = useNavigate();
+  const auth = useAuth();
+  const user = auth?.user ?? null;
+  const login = auth?.login ?? (() => {});
+
+  const isAuthenticated = Boolean(user);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   const [filters, setFilters] = useState(initialFilters);
   const [filterOptions, setFilterOptions] = useState(null);
   const [competitions, setCompetitions] = useState([]);
   const [sidebarData, setSidebarData] = useState(null);
   const [loading, setLoading] = useState(false);
+<<<<<<< HEAD
 
   /**
    * auth flow:
@@ -62,11 +92,30 @@ export default function LandingPage() {
     fetchLandingFilters()
       .then(setFilterOptions)
       .catch(console.error);
+=======
+  const [authStep, setAuthStep] = useState(null);
+
+  const requestFilters = useMemo(() => ({
+    search: filters.search,
+    tab: filters.tab,
+    status: filters.status,
+    event_type: filters.event_type,
+    participation_type: filters.participation_type,
+    industry: filters.industry,
+    difficulty: filters.difficulty,
+  }), [filters]);
+
+  useEffect(() => {
+    fetchLandingFilters().then(setFilterOptions).catch(console.error);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   }, []);
 
   useEffect(() => {
     setLoading(true);
+<<<<<<< HEAD
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     fetchCompetitions(requestFilters)
       .then(setCompetitions)
       .catch(console.error)
@@ -78,6 +127,7 @@ export default function LandingPage() {
       setSidebarData(null);
       return;
     }
+<<<<<<< HEAD
 
     fetchSidebar()
       .then((data) => {
@@ -87,12 +137,18 @@ export default function LandingPage() {
         });
       })
       .catch(console.error);
+=======
+    fetchSidebar().then(setSidebarData).catch(console.error);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   }, [isAuthenticated]);
 
   const handleToggleFilter = (groupName, value) => {
     setFilters((prev) => {
       const exists = prev[groupName].includes(value);
+<<<<<<< HEAD
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       return {
         ...prev,
         [groupName]: exists
@@ -102,6 +158,7 @@ export default function LandingPage() {
     });
   };
 
+<<<<<<< HEAD
   const handleReset = () => {
     setFilters(initialFilters);
   };
@@ -121,6 +178,13 @@ export default function LandingPage() {
   const handleSignUpComplete = () => {
     setAuthStep("onboard");
   };
+=======
+  const handleReset = () => setFilters(initialFilters);
+  const handleOpenSignUp = () => setAuthStep("signup");
+  const handleCloseSignUp = () => setAuthStep(null);
+  const handleOpenSignIn = () => alert("Sign In modal will be implemented next.");
+  const handleSignUpComplete = () => setAuthStep("onboard");
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
   const handleFinishOnboarding = (data) => {
     login({
@@ -128,6 +192,7 @@ export default function LandingPage() {
       displayName: "Stan",
       interests: data?.interests || [],
       createTeam: data?.createTeam || false,
+<<<<<<< HEAD
       isRegistered: true,
     });
 
@@ -178,15 +243,26 @@ export default function LandingPage() {
         saved_competitions: nextSavedList,
       };
     });
+=======
+    });
+    setAuthStep(null);
+    navigate("/profile");
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   };
 
   return (
     <div className="landing-page">
       <Header
+<<<<<<< HEAD
         search={filters.search}
         onSearchChange={(value) =>
           setFilters((prev) => ({ ...prev, search: value }))
         }
+=======
+        isAuthenticated={isAuthenticated}
+        search={filters.search}
+        onSearchChange={(value) => setFilters((prev) => ({ ...prev, search: value }))}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         onOpenSignUp={handleOpenSignUp}
         onOpenSignIn={handleOpenSignIn}
       />
@@ -201,17 +277,24 @@ export default function LandingPage() {
 
         <main className="landing-main">
           <h1>Active competitions</h1>
+<<<<<<< HEAD
 
           <CompetitionTabs
             activeTab={filters.tab}
             onChange={(tab) =>
               setFilters((prev) => ({ ...prev, tab }))
             }
+=======
+          <CompetitionTabs
+            activeTab={filters.tab}
+            onChange={(tab) => setFilters((prev) => ({ ...prev, tab }))}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
           />
 
           {loading ? (
             <div>Loading...</div>
           ) : (
+<<<<<<< HEAD
             <div
               className={`competition-grid ${
                 isAuthenticated ? "with-sidebar" : ""
@@ -227,6 +310,14 @@ export default function LandingPage() {
                 ))}
               </div>
 
+=======
+            <div className={`competition-grid ${isAuthenticated ? "with-sidebar" : ""}`}>
+              <div className="cards-grid">
+                {competitions.map((item) => (
+                  <CompetitionCard key={item.id} item={item} />
+                ))}
+              </div>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
               {isAuthenticated && <RightSidebar data={sidebarData} />}
             </div>
           )}

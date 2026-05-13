@@ -6,6 +6,10 @@ body { margin: 0; font-family: Arial, sans-serif; background: #efefef; color: #1
 .search-wrap { display: flex; justify-content: center; }
 .search-input { width: 100%; max-width: 720px; padding: 14px 20px; border-radius: 24px; border: 1px solid #666; background: #f7f7f7; font-size: 18px; }
 .header-actions { display: flex; gap: 10px; align-items: center; }
+<<<<<<< HEAD
+=======
+
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 .auth-actions-group {
   display: flex;
   gap: 10px;
@@ -626,8 +630,11 @@ body { margin: 0; font-family: Arial, sans-serif; background: #efefef; color: #1
   grid-template-columns: 1fr;
 }
 
+<<<<<<< HEAD
 /* ===== CARD ROOT ===== */
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 .competition-card {
   display: flex;
   flex-direction: column;
@@ -986,6 +993,7 @@ body { margin: 0; font-family: Arial, sans-serif; background: #efefef; color: #1
 .status-upcoming {
   color: #d97706;
   font-weight: 600;
+<<<<<<< HEAD
 }
 
 /* ===== COMPETITION DETAILS PAGE ===== */
@@ -1507,4 +1515,6 @@ body { margin: 0; font-family: Arial, sans-serif; background: #efefef; color: #1
   .announcement-comment-form {
     flex-direction: column;
   }
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 }

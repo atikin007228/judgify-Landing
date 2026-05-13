@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { createContext, useContext, useMemo, useState } from "react";
 
 const AuthContext = createContext(undefined);
@@ -29,10 +30,22 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Failed to persist auth user", error);
     }
+=======
+import React, { createContext, useContext, useState } from "react";
+
+const AuthContext = createContext(undefined);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+
+  const login = (userData) => {
+    setUser(userData);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   };
 
   const logout = () => {
     setUser(null);
+<<<<<<< HEAD
 
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -53,6 +66,12 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
+=======
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       {children}
     </AuthContext.Provider>
   );

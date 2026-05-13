@@ -1,5 +1,6 @@
 import React from "react";
 
+<<<<<<< HEAD
 function getStatusLabel(status) {
   const map = {
     active: "Online",
@@ -25,11 +26,37 @@ export default function CompetitionSidebar({ competition }) {
 
         <div className="competition-side-row">
           <span>Round:</span>
+=======
+function formatDateTime(dateValue) {
+  if (!dateValue) return "—";
+
+  const date = new Date(dateValue);
+  return date.toLocaleString();
+}
+
+export default function CompetitionSidebar({ competition }) {
+  const materials = competition.materials || [];
+  const plannedEvents = competition.planned_events || [];
+
+  return (
+    <div className="competition-sidebar">
+      <section className="sidebar-card">
+        <h3>Current Status</h3>
+
+        <div className="sidebar-kv">
+          <span>Status</span>
+          <strong>{competition.status_label || competition.status}</strong>
+        </div>
+
+        <div className="sidebar-kv">
+          <span>Round</span>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
           <strong>
             {competition.current_round}/{competition.total_rounds}
           </strong>
         </div>
 
+<<<<<<< HEAD
         <div className="competition-side-row">
           <span>{competition.participants_count} participants</span>
           <span className="competition-side-code">
@@ -85,6 +112,54 @@ export default function CompetitionSidebar({ competition }) {
             </a>
           ))}
         </div>
+=======
+        <div className="sidebar-kv">
+          <span>Participants</span>
+          <strong>{competition.participants_count}</strong>
+        </div>
+
+        <div className="sidebar-kv">
+          <span>Next deadline</span>
+          <strong>{formatDateTime(competition.timer_deadline)}</strong>
+        </div>
+      </section>
+
+      <section className="sidebar-card">
+        <h3>Supporting Materials</h3>
+
+        {materials.length === 0 ? (
+          <p className="sidebar-empty">No materials yet.</p>
+        ) : (
+          <ul className="sidebar-list">
+            {materials.map((item) => (
+              <li key={item.id}>
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  {item.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="sidebar-card">
+        <h3>Planned Events</h3>
+
+        {plannedEvents.length === 0 ? (
+          <p className="sidebar-empty">No planned events.</p>
+        ) : (
+          <ul className="sidebar-events">
+            {plannedEvents.map((event) => (
+              <li key={event.id} className="sidebar-event-item">
+                <div className="sidebar-event-title">{event.title}</div>
+                <div className="sidebar-event-time">
+                  {formatDateTime(event.starts_at)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       </section>
     </div>
   );

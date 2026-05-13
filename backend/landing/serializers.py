@@ -1,4 +1,14 @@
 from rest_framework import serializers
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+from .models import Competition
+
+
+class CompetitionCardSerializer(serializers.ModelSerializer):
+    is_saved = serializers.SerializerMethodField()
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
 from .models import (
     Competition,
@@ -266,6 +276,10 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
 
     is_saved = serializers.SerializerMethodField()
     is_watching = serializers.SerializerMethodField()
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
     class Meta:
         model = Competition
@@ -276,6 +290,15 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "short_description",
             "cover_image",
             "status",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            "event_type",
+            "participation_type",
+            "industry",
+            "difficulty",
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
             "status_label",
             "event_type",
             "event_type_label",
@@ -285,6 +308,10 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "industry_label",
             "difficulty",
             "difficulty_label",
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
             "current_round",
             "total_rounds",
             "participants_count",
@@ -295,6 +322,14 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "is_online_now",
             "registration_open",
             "submissions_open",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            "timer_deadline",
+            "created_at",
+            "is_saved",
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
             "trending_score",
             "starts_at",
             "ends_at",
@@ -321,12 +356,25 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "is_watching",
             "created_at",
             "updated_at",
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         ]
 
     def get_is_saved(self, obj):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        return obj.saved_by_users.filter(user=request.user).exists()
+
+
+class SidebarCompetitionSerializer(serializers.ModelSerializer):
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
         return UserSavedCompetition.objects.filter(
             user=request.user,
@@ -360,12 +408,27 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
     materials = CompetitionMaterialSerializer(many=True, read_only=True)
     planned_events = CompetitionPlannedEventSerializer(many=True, read_only=True)
 
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     class Meta:
         model = Competition
         fields = [
             "id",
             "slug",
             "name",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            "cover_image",
+            "participants_count",
+            "comments_count",
+            "status",
+            "is_online_now",
+            "timer_deadline",
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
             "short_description",
             "full_description",
             "cover_image",
@@ -458,4 +521,8 @@ class UserSavedCompetitionSerializer(serializers.ModelSerializer):
             "id",
             "competition",
             "created_at",
+<<<<<<< HEAD
+=======
+>>>>>>> e194388 (changed backend)
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         ]

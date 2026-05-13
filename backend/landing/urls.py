@@ -1,4 +1,14 @@
 from django.urls import path
+<<<<<<< HEAD
+=======
+from .views import LandingCompetitionsView, LandingSidebarView, LandingFiltersView
+
+urlpatterns = [
+    path('landing/competitions/', LandingCompetitionsView.as_view(), name='landing-competitions'),
+    path('landing/sidebar/', LandingSidebarView.as_view(), name='landing-sidebar'),
+    path('landing/filters/', LandingFiltersView.as_view(), name='landing-filters'),
+]
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 
 from .views import (
     LandingCompetitionsView,
@@ -43,4 +53,8 @@ urlpatterns = [
     # results / judging
     path("competitions/<int:pk>/results/", CompetitionResultsView.as_view(), name="competition-results"),
     path("competitions/<int:pk>/judging/", CompetitionJudgingView.as_view(), name="competition-judging"),
+<<<<<<< HEAD
 ]
+=======
+]
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e

@@ -49,8 +49,20 @@ export default function Header({
 
             {menuOpen && (
               <div className="account-dropdown">
+<<<<<<< HEAD
                 <Link to="/profile">Profile</Link>
                 <button onClick={logout}>Logout</button>
+=======
+                <Link to="/profile" onClick={() => setMenuOpen(false)}>
+                  Profile
+                </Link>
+                <button onClick={() => {
+                  logout();
+                  setMenuOpen(false);
+                }}>
+                  Logout
+                </button>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
               </div>
             )}
           </div>

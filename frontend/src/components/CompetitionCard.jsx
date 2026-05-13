@@ -10,6 +10,7 @@ function getStatusLabel(status) {
     registration_open: "Registration open",
     upcoming: "Upcoming",
   };
+<<<<<<< HEAD
 
   return map[status] || status;
 }
@@ -25,6 +26,13 @@ function getStatusClass(status) {
   };
 
   return map[status] || "status-default";
+=======
+  return map[status] || status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getStatusClass(status) {
+  return `status-badge status-${status.replace("_", "-")}`;
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
 }
 
 function formatRemaining(ms) {
@@ -46,6 +54,7 @@ function formatRemaining(ms) {
     .join(":");
 }
 
+<<<<<<< HEAD
 function HeartIcon({ filled = false }) {
   return (
     <svg
@@ -56,13 +65,29 @@ function HeartIcon({ filled = false }) {
       className={`card-heart-icon ${filled ? "filled" : ""}`}
     >
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+=======
+function HeartIcon({ filled }) {
+  return (
+    <svg 
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill={filled ? "currentColor" : "none"} 
+      stroke="currentColor" 
+      strokeWidth="2"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     </svg>
   );
 }
 
 export default function CompetitionCard({ item, onSavedChange }) {
   const navigate = useNavigate();
+<<<<<<< HEAD
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   const [now, setNow] = useState(Date.now());
   const [saved, setSaved] = useState(Boolean(item.is_saved));
   const [saving, setSaving] = useState(false);
@@ -82,6 +107,7 @@ export default function CompetitionCard({ item, onSavedChange }) {
   }, [item.timer_deadline, now]);
 
   const isTimerExpired = remainingMs !== null && remainingMs <= 0;
+<<<<<<< HEAD
 
   const uiStatus =
     item.status === "active" && isTimerExpired
@@ -102,11 +128,21 @@ export default function CompetitionCard({ item, onSavedChange }) {
         },
       },
     });
+=======
+  const uiStatus = item.status === "active" && isTimerExpired ? "finished" : item.status;
+  const isDanger = remainingMs !== null && remainingMs > 0 && remainingMs <= 5 * 60 * 1000;
+
+  const openCompetition = () => {
+    navigate(`/competitions/${item.id}`);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
   };
 
   const handleSavedClick = async (e) => {
     e.stopPropagation();
+<<<<<<< HEAD
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     if (saving) return;
 
     const nextSaved = !saved;
@@ -119,6 +155,7 @@ export default function CompetitionCard({ item, onSavedChange }) {
         {
           method: nextSaved ? "POST" : "DELETE",
           credentials: "include",
+<<<<<<< HEAD
           headers: {
             "Content-Type": "application/json",
           },
@@ -132,6 +169,14 @@ export default function CompetitionCard({ item, onSavedChange }) {
       if (onSavedChange) {
         onSavedChange(item.id, nextSaved);
       }
+=======
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to toggle saved");
+      if (onSavedChange) onSavedChange(item.id, nextSaved);
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
     } catch (error) {
       console.error(error);
       setSaved(!nextSaved);
@@ -146,6 +191,7 @@ export default function CompetitionCard({ item, onSavedChange }) {
       onClick={openCompetition}
       role="button"
       tabIndex={0}
+<<<<<<< HEAD
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -160,20 +206,35 @@ export default function CompetitionCard({ item, onSavedChange }) {
             ? { backgroundImage: `url(${item.cover_image})` }
             : undefined
         }
+=======
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openCompetition()}
+    >
+      <div
+        className="card-cover"
+        style={item.cover_image ? { backgroundImage: `url(${item.cover_image})` } : undefined}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
       >
         {item.status !== "archived" && remainingMs !== null && (
           <div className={`card-timer ${isDanger ? "danger" : ""}`}>
             {formatRemaining(remainingMs)}
           </div>
         )}
+<<<<<<< HEAD
 
+=======
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         <button
           type="button"
           className={`card-bookmark-btn ${saved ? "saved" : ""}`}
           onClick={handleSavedClick}
+<<<<<<< HEAD
           aria-label={saved ? "Remove from saved" : "Save competition"}
           title={saved ? "Remove from saved" : "Save competition"}
           disabled={saving}
+=======
+          disabled={saving}
+          aria-label={saved ? "Remove from saved" : "Save competition"}
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         >
           <HeartIcon filled={saved} />
         </button>
@@ -182,6 +243,7 @@ export default function CompetitionCard({ item, onSavedChange }) {
       <div className="card-body">
         <div className="card-name-row">
           <div className="card-name">{item.name}</div>
+<<<<<<< HEAD
           {item.industry && (
             <span className="card-industry-tag">{item.industry}</span>
           )}
@@ -191,13 +253,28 @@ export default function CompetitionCard({ item, onSavedChange }) {
           Round: {item.current_round}/{item.total_rounds}
         </div>
 
+=======
+          {item.industry && <span className="card-industry-tag">{item.industry}</span>}
+        </div>
+        
+        <div className="card-round">
+          Round: {item.current_round}/{item.total_rounds}
+        </div>
+        
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         {item.short_description && (
           <div className="card-description">{item.short_description}</div>
         )}
       </div>
 
       <div className="card-footer">
+<<<<<<< HEAD
         <span>👤 {item.participants_count} participants</span>
+=======
+        <span className="participants-count">
+          {item.participants_count} participants
+        </span>
+>>>>>>> db14104b82b30310a55463a76157b71bf978c90e
         <span className={getStatusClass(uiStatus)}>
           {getStatusLabel(uiStatus)}
         </span>

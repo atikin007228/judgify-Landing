@@ -1851,3 +1851,251 @@ body { background: radial-gradient(circle at 16% 8%, rgba(177,201,239,.72), tran
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== UPDATED SIGN UP PANEL ===== */
+.signup-screen {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(240, 243, 250, 0.65), transparent 24%),
+    linear-gradient(135deg, #8aaee0 0%, #b1c9ef 38%, #d5deef 100%);
+}
+
+.signup-screen::before,
+.signup-screen::after {
+  content: "";
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  opacity: 0.35;
+  filter: blur(0.2px);
+}
+
+.signup-screen::before {
+  width: 360px;
+  height: 520px;
+  left: -80px;
+  top: -40px;
+  border-radius: 70px;
+  background: linear-gradient(160deg, rgba(240, 243, 250, 0.68), rgba(99, 142, 203, 0.38));
+  transform: rotate(42deg);
+}
+
+.signup-screen::after {
+  width: 420px;
+  height: 320px;
+  right: -130px;
+  bottom: -90px;
+  border-radius: 80px;
+  background: linear-gradient(160deg, rgba(240, 243, 250, 0.52), rgba(57, 88, 134, 0.28));
+  transform: rotate(-28deg);
+}
+
+.signup-panel {
+  max-width: 410px;
+  border: 1px solid rgba(240, 243, 250, 0.66);
+  border-radius: 28px;
+  background: rgba(240, 243, 250, 0.76);
+  box-shadow: 0 28px 72px rgba(57, 88, 134, 0.32);
+  backdrop-filter: blur(18px);
+  padding: 26px 34px 28px;
+  color: #0a0b24;
+}
+
+.signup-title {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #0a0b24;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.signup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.signup-field label,
+.signup-role-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #211e46;
+}
+
+.signup-field input,
+.password-input-wrap input {
+  width: 100%;
+  height: 43px;
+  border: 1px solid rgba(57, 88, 134, 0.28);
+  border-radius: 7px;
+  background: rgba(240, 243, 250, 0.68);
+  color: #0a0b24;
+  font-size: 13px;
+  padding: 0 13px;
+}
+
+.signup-field input::placeholder,
+.password-input-wrap input::placeholder {
+  color: rgba(67, 58, 103, 0.42);
+}
+
+.signup-field input:focus,
+.password-input-wrap input:focus {
+  outline: none;
+  border-color: #638ecb;
+  box-shadow: 0 0 0 3px rgba(99, 142, 203, 0.18);
+  background: rgba(240, 243, 250, 0.9);
+}
+
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrap input {
+  padding-right: 43px;
+}
+
+.password-eye-btn {
+  position: absolute;
+  right: 9px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #443a67;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.password-eye-btn:hover {
+  background: rgba(177, 201, 239, 0.48);
+}
+
+.signup-role-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 3px;
+}
+
+.signup-role-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.signup-role-card {
+  min-height: 96px;
+  border: 1px solid rgba(57, 88, 134, 0.34);
+  border-radius: 6px;
+  background: rgba(240, 243, 250, 0.62);
+  color: #0a0b24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 6px 8px;
+}
+
+.signup-role-card:hover,
+.signup-role-card.active {
+  border-color: rgba(57, 88, 134, 0.8);
+  background: rgba(213, 222, 239, 0.86);
+  box-shadow: 0 10px 24px rgba(57, 88, 134, 0.18);
+}
+
+.signup-role-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #395886;
+  color: #f0f3fa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.signup-role-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.signup-role-radio {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(57, 88, 134, 0.45);
+  background: rgba(240, 243, 250, 0.78);
+  box-shadow: inset 0 0 0 3px rgba(240, 243, 250, 0.92);
+}
+
+.signup-role-card.active .signup-role-radio {
+  background: #395886;
+}
+
+.signup-submit-btn {
+  width: 168px;
+  height: 43px;
+  align-self: center;
+  border: none;
+  border-radius: 13px;
+  margin-top: 4px;
+  background: linear-gradient(90deg, #395886, #638ecb);
+  color: #f0f3fa;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(57, 88, 134, 0.28);
+}
+
+.signup-submit-btn:hover {
+  filter: brightness(1.04);
+}
+
+.signup-bottom-link {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #443a67;
+}
+
+.signup-bottom-link .auth-link-btn {
+  font-size: 12px;
+  color: #395886;
+}
+
+.signin-demo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-demo-btn {
+  background: rgba(33, 30, 70, 0.92);
+  border-color: rgba(33, 30, 70, 0.45);
+  color: #f0f3fa;
+}
+
+@media (max-width: 520px) {
+  .signup-panel {
+    padding: 24px 18px;
+  }
+
+  .signup-role-list {
+    gap: 8px;
+  }
+}

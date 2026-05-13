@@ -31,15 +31,25 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
     }
   };
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = async (role = "organizer") => {
     setBusy(true);
     try {
-      await onComplete?.({
-        email: "organizer@example.com",
-        username: "organizer",
-        displayName: "Organizer Demo",
-        primaryRole: "organizer",
-      });
+      const demoUsers = {
+        organizer: {
+          email: "organizer@example.com",
+          username: "organizer",
+          displayName: "Organizer Demo",
+          primaryRole: "organizer",
+        },
+        admin: {
+          email: "admin@example.com",
+          username: "admin",
+          displayName: "Administrator Demo",
+          primaryRole: "admin",
+        },
+      };
+
+      await onComplete?.(demoUsers[role] || demoUsers.organizer);
       onClose?.();
     } finally {
       setBusy(false);
@@ -89,9 +99,14 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
           <span>OR</span>
         </div>
 
-        <button className="continue-email-btn" type="button" onClick={handleDemoLogin} disabled={busy}>
-          Continue as organizer demo
-        </button>
+        <div className="signin-demo-actions">
+          <button className="continue-email-btn" type="button" onClick={() => handleDemoLogin("organizer")} disabled={busy}>
+            Continue as organizer demo
+          </button>
+          <button className="continue-email-btn admin-demo-btn" type="button" onClick={() => handleDemoLogin("admin")} disabled={busy}>
+            Continue as administrator demo
+          </button>
+        </div>
 
         <div className="auth-bottom-link">
           No account yet?{" "}

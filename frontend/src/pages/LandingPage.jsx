@@ -44,6 +44,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
 
   const [authStep, setAuthStep] = useState(null);
+  const [pendingSignUpData, setPendingSignUpData] = useState(null);
 
   const requestFilters = useMemo(
     () => ({
@@ -133,7 +134,8 @@ export default function LandingPage() {
     setAuthStep("signin");
   };
 
-  const handleSignUpComplete = () => {
+  const handleSignUpComplete = (data) => {
+    setPendingSignUpData(data || null);
     setAuthStep("onboard");
   };
 
@@ -145,10 +147,11 @@ export default function LandingPage() {
   const handleFinishOnboarding = async (data) => {
     try {
       await login({
-        displayName: "Stan",
+        ...(pendingSignUpData || {}),
         interests: data?.interests || [],
         createTeam: data?.createTeam || false,
       });
+      setPendingSignUpData(null);
       setAuthStep(null);
     } catch (error) {
       console.error("Failed to complete demo login", error);

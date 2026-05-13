@@ -6,7 +6,6 @@ import CompetitionCard from "../components/CompetitionCard";
 import RightSidebar from "../components/RightSidebar";
 import SignUpModal from "../components/SignUpModal";
 import OnboardModal from "../components/auth/OnboardModal";
-import SignInModal from "../components/auth/SignInModal";
 
 import {
   fetchCompetitions,
@@ -44,7 +43,6 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
 
   const [authStep, setAuthStep] = useState(null);
-  const [pendingSignUpData, setPendingSignUpData] = useState(null);
 
   const requestFilters = useMemo(
     () => ({
@@ -131,27 +129,20 @@ export default function LandingPage() {
   };
 
   const handleOpenSignIn = () => {
-    setAuthStep("signin");
+    alert("Sign In modal will be implemented next.");
   };
 
-  const handleSignUpComplete = (data) => {
-    setPendingSignUpData(data || null);
+  const handleSignUpComplete = () => {
     setAuthStep("onboard");
-  };
-
-  const handleSignInComplete = async (credentials) => {
-    await login(credentials);
-    setAuthStep(null);
   };
 
   const handleFinishOnboarding = async (data) => {
     try {
       await login({
-        ...(pendingSignUpData || {}),
+        displayName: "Stan",
         interests: data?.interests || [],
         createTeam: data?.createTeam || false,
       });
-      setPendingSignUpData(null);
       setAuthStep(null);
     } catch (error) {
       console.error("Failed to complete demo login", error);
@@ -270,15 +261,6 @@ export default function LandingPage() {
           onClose={handleCloseSignUp}
           onOpenSignIn={handleOpenSignIn}
           onComplete={handleSignUpComplete}
-        />
-      )}
-
-      {authStep === "signin" && (
-        <SignInModal
-          isOpen={true}
-          onClose={() => setAuthStep(null)}
-          onOpenSignUp={handleOpenSignUp}
-          onComplete={handleSignInComplete}
         />
       )}
 

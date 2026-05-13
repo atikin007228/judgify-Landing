@@ -118,7 +118,7 @@ export default function CompetitionCard({ item, onSavedChange }) {
       await toggleSavedCompetition(item.id, nextSaved);
 
       if (onSavedChange) {
-        onSavedChange(item.id, nextSaved);
+        onSavedChange(item.id, nextSaved, item);
       }
     } catch (error) {
       console.error(error);

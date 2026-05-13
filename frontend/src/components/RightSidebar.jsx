@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { toggleSavedCompetition } from "../api/savedApi";
 
 function getStatusLabel(status) {
   const map = {
@@ -26,6 +27,20 @@ function getStatusClass(status) {
   return map[status] || "status-default";
 }
 
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      className="card-heart-icon filled"
+    >
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
+
 function BannerItem({ item }) {
   return (
     <div className="last-competition-banner">
@@ -51,7 +66,23 @@ function BannerItem({ item }) {
   );
 }
 
-function SavedCard({ item }) {
+function SavedCard({ item, onSavedChange }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleRemove = async () => {
+    if (saving) return;
+    setSaving(true);
+
+    try {
+      await toggleSavedCompetition(item.id, false);
+      onSavedChange?.(item.id, false, item);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="sidebar-card">
       <div
@@ -63,7 +94,19 @@ function SavedCard({ item }) {
         }
       />
       <div className="sidebar-card-info">
-        <div className="sidebar-card-name">{item.name}</div>
+        <div className="sidebar-card-name-row">
+          <div className="sidebar-card-name">{item.name}</div>
+          <button
+            type="button"
+            className="sidebar-heart-btn saved"
+            onClick={handleRemove}
+            aria-label="Remove from saved"
+            title="Remove from saved"
+            disabled={saving}
+          >
+            <HeartIcon />
+          </button>
+        </div>
         <div className="sidebar-card-meta">
           <span>👤 {item.participants_count}</span>
           <span>💬 {item.comments_count}</span>
@@ -76,7 +119,7 @@ function SavedCard({ item }) {
   );
 }
 
-export default function RightSidebar({ data }) {
+export default function RightSidebar({ data, onSavedChange }) {
   if (!data) return null;
 
   return (
@@ -93,9 +136,17 @@ export default function RightSidebar({ data }) {
       <section className="right-panel-block">
         <h3>Saved</h3>
         <div className="sidebar-list">
-          {data.saved_competitions.map((item) => (
-            <SavedCard key={item.id} item={item} />
-          ))}
+          {data.saved_competitions.length === 0 ? (
+            <div className="sidebar-empty">No saved competitions yet.</div>
+          ) : (
+            data.saved_competitions.map((item) => (
+              <SavedCard
+                key={item.id}
+                item={item}
+                onSavedChange={onSavedChange}
+              />
+            ))
+          )}
         </div>
       </section>
     </aside>

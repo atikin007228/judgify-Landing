@@ -1,5 +1,8 @@
 import { apiRequest } from "./client";
 
+const landingFiltersCache = new Map();
+const landingFiltersPromises = new Map();
+
 function buildQuery(params = {}) {
   const searchParams = new URLSearchParams();
 
@@ -14,8 +17,25 @@ function buildQuery(params = {}) {
   return searchParams.toString();
 }
 
-export function fetchLandingFilters() {
-  return apiRequest("/landing/filters/");
+export function fetchLandingFilters(language = "en") {
+  const cacheKey = language === "uk" ? "uk" : "en";
+  if (landingFiltersCache.has(cacheKey)) return Promise.resolve(landingFiltersCache.get(cacheKey));
+  if (!landingFiltersPromises.has(cacheKey)) {
+    landingFiltersPromises.set(cacheKey, apiRequest(`/landing/filters/?lang=${cacheKey}`)
+      .then((data) => {
+        landingFiltersCache.set(cacheKey, data);
+        return data;
+      })
+      .finally(() => {
+        landingFiltersPromises.delete(cacheKey);
+      }));
+  }
+  return landingFiltersPromises.get(cacheKey);
+}
+
+export function clearLandingFiltersCache() {
+  landingFiltersCache.clear();
+  landingFiltersPromises.clear();
 }
 
 export function fetchCompetitions(filters = {}) {
@@ -25,4 +45,66 @@ export function fetchCompetitions(filters = {}) {
 
 export function fetchSidebar() {
   return apiRequest("/landing/sidebar/");
+}
+
+export function fetchCompetitionDetail(id) {
+  return apiRequest(`/competitions/${id}/`);
+}
+
+export function fetchCompetitionParticipants(id) {
+  return apiRequest(`/competitions/${id}/participants/`);
+}
+
+export function fetchCompetitionResults(id) {
+  return apiRequest(`/competitions/${id}/results/`);
+}
+
+export function fetchCompetitionJudging(id) {
+  return apiRequest(`/competitions/${id}/judging/`);
+}
+
+export function fetchCompetitionSubmissions(id) {
+  return apiRequest(`/competitions/${id}/submissions/`);
+}
+
+export function submitCompetitionWork(id, payload = {}) {
+  const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
+  return apiRequest(`/competitions/${id}/submissions/`, {
+    method: "POST",
+    body: isFormData ? payload : JSON.stringify(payload),
+  });
+}
+
+export function submitCompetitionScore(id, payload = {}) {
+  return apiRequest(`/competitions/${id}/judging/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteCompetitionScore(id) {
+  return apiRequest(`/competition-scores/${id}/`, {
+    method: "DELETE",
+  });
+}
+
+export function respondJudgeAssignment(id, decision) {
+  return apiRequest(`/judge-assignments/${id}/respond/`, {
+    method: "POST",
+    body: JSON.stringify({ decision }),
+  });
+}
+
+export function joinCompetition(id, payload = {}) {
+  return apiRequest(`/competitions/${id}/join/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+
+export function markMaterialViewed(id) {
+  return apiRequest(`/materials/${id}/view/`, {
+    method: "POST",
+  });
 }

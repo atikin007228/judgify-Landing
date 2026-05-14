@@ -1,18 +1,23 @@
 import React from 'react';
+import { useLanguage } from "../context/LanguageContext";
 
 const tabs = [
-  { key: 'trending', label: 'Trending' },
-  { key: 'new', label: 'New' },
-  { key: 'open_submission', label: 'Open Submission' },
-  { key: 'live_stream', label: 'Live Stream' },
+  { key: 'registration_open', labelKey: 'tabs.registration_open' },
+  { key: 'active', labelKey: 'tabs.active' },
+  { key: 'judging', labelKey: 'tabs.judging' },
+  { key: 'upcoming', labelKey: 'tabs.upcoming' },
+  { key: 'finished', labelKey: 'tabs.finished' },
+  { key: 'archived', labelKey: 'tabs.archived' },
 ];
 
 export default function CompetitionTabs({ activeTab, onChange }) {
+  const { t } = useLanguage();
+
   return (
     <div className="competition-tabs">
       {tabs.map((tab) => (
         <button key={tab.key} className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`} onClick={() => onChange(tab.key)}>
-          {tab.label}
+          {t(tab.labelKey)}
         </button>
       ))}
     </div>

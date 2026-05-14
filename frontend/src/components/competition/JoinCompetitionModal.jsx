@@ -1,46 +1,112 @@
 import React, { useState } from "react";
+import { joinCompetition } from "../../api/landingApi";
+import { useLanguage } from "../../context/LanguageContext";
 
 const roles = [
-  { id: "participant", label: "Participant" },
-  { id: "team", label: "Team" },
-  { id: "observer", label: "Observer" },
+  { id: "participant", labelKey: "joinModal.individual" },
+  { id: "team_member", labelKey: "joinModal.team" },
 ];
 
-export default function JoinCompetitionModal({ competition, onClose }) {
-  const [selectedRole, setSelectedRole] = useState("participant");
+function rolesForCompetition(competition) {
+  if (competition?.participation_type === "individual") {
+    return roles.filter((role) => role.id === "participant");
+  }
+  if (competition?.participation_type === "team") {
+    return roles.filter((role) => role.id === "team_member");
+  }
+  return roles;
+}
 
-  const handleSubmit = () => {
-    alert(`Joined "${competition.name}" as ${selectedRole}`);
-    onClose();
+export default function JoinCompetitionModal({ competition, onClose, onSubmitted }) {
+  const { t } = useLanguage();
+  const availableRoles = rolesForCompetition(competition);
+  const [selectedRole, setSelectedRole] = useState(availableRoles[0]?.id || "participant");
+  const [teamName, setTeamName] = useState(competition?.user_team?.name || "");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    if (selectedRole === "team_member" && !teamName.trim()) {
+      setError(t("joinModal.teamRequired"));
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const result = await joinCompetition(competition.id, {
+        role: selectedRole,
+        team_name: selectedRole === "team_member" ? teamName.trim() : "",
+        message: message.trim(),
+      });
+      onSubmitted?.(result);
+    } catch (err) {
+      setError(err.message || t("joinModal.submitError"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOverlayMouseDown = (event) => {
+    if (event.target === event.currentTarget) {
+      onClose?.();
+    }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="join-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Join Competition</h2>
-        <p>Select your role before joining this competition.</p>
+    <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
+      <div className="join-modal" onMouseDown={(e) => e.stopPropagation()}>
+        <h2>{t("joinModal.title")}</h2>
+        <p>{t("joinModal.description")}</p>
 
         <div className="join-role-list">
-          {roles.map((role) => (
+          {availableRoles.map((role) => (
             <button
               key={role.id}
               type="button"
-              className={`join-role-btn ${
-                selectedRole === role.id ? "active" : ""
-              }`}
+              className={`join-role-btn ${selectedRole === role.id ? "active" : ""}`}
               onClick={() => setSelectedRole(role.id)}
             >
-              {role.label}
+              {t(role.labelKey)}
             </button>
           ))}
         </div>
 
+        {selectedRole === "team_member" && (
+          <label className="join-field">
+            {t("joinModal.teamName")}
+            <input
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder={t("joinModal.teamPlaceholder")}
+            />
+          </label>
+        )}
+
+        <label className="join-field">
+          {t("joinModal.note")}
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={t("joinModal.notePlaceholder")}
+          />
+        </label>
+
+        {error && <div className="join-error">{error}</div>}
+
         <div className="join-modal-actions">
           <button type="button" className="secondary-btn" onClick={onClose}>
-            Cancel
+            {t("joinModal.cancel")}
           </button>
-          <button type="button" className="primary-btn" onClick={handleSubmit}>
-            Confirm
+          <button type="button" className="primary-btn" onClick={handleSubmit} disabled={submitting}>
+            {submitting
+              ? t("joinModal.submitting")
+              : competition?.access_mode === "open"
+                ? t("joinModal.joinNow")
+                : t("joinModal.submitReview")}
           </button>
         </div>
       </div>

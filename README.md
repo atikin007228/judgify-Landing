@@ -1,5 +1,12 @@
 # Judgify Landing Demo
 
+## Project change notes
+
+Current package version: `v16`.
+
+Version history is maintained in [`CHANGELOG.md`](CHANGELOG.md). Update it together with every project archive so model, API, UI and workflow changes do not get lost between iterations.
+
+
 Демо-проєкт лендінгу платформи змагань на стеку:
 - React (Vite)
 - Django + Django REST Framework
@@ -133,3 +140,14 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 - websocket live timer
 - детальна сторінка турніру
 - пагінація
+
+### Live streams and realtime demo rounds
+
+A stream is configured per round, not only per competition. For a real integrated player, use the provider's iframe/embed URL in `stream_embed_url` and keep the public watch URL in `stream_url`. If only `stream_url` is filled, the competition page shows an external link instead of an iframe. This is enough for YouTube/Vimeo/Twitch-style streams when the provider allows embedding; direct HLS/WebRTC integration would need a dedicated player component.
+
+After pulling this version run:
+
+```bash
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py seed_landing
+```

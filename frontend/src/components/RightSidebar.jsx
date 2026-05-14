@@ -1,17 +1,11 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { toggleSavedCompetition } from "../api/savedApi";
+import { useLanguage } from "../context/LanguageContext";
+import { getMaterialBadge, getMaterialMeta, getMaterialTitle, getMaterialUrl } from "../utils/materials";
 
-function getStatusLabel(status) {
-  const map = {
-    active: "Online",
-    finished: "Finished",
-    judging: "Judging",
-    archived: "Archived",
-    registration_open: "Registration open",
-    upcoming: "Upcoming",
-  };
-
-  return map[status] || status;
+function getStatusLabel(status, t) {
+  return t(`statuses.${status}`, { defaultValue: status });
 }
 
 function getStatusClass(status) {
@@ -41,32 +35,53 @@ function HeartIcon() {
   );
 }
 
-function BannerItem({ item }) {
+function CompetitionRecentItem({ item, t }) {
   return (
-    <div className="last-competition-banner">
+    <Link className="recent-item recent-item-link" to={`/competitions/${item.id}`}>
       <div
-        className="last-competition-banner-cover"
-        style={
-          item.cover_image
-            ? { backgroundImage: `url(${item.cover_image})` }
-            : undefined
-        }
+        className="recent-item-cover"
+        style={item.cover_image ? { backgroundImage: `url(${item.cover_image})` } : undefined}
       />
-      <div className="last-competition-banner-content">
-        <div className="last-competition-banner-name">{item.name}</div>
-        <div className="last-competition-banner-meta">
-          <span>👤 {item.participants_count}</span>
-          <span>💬 {item.comments_count}</span>
-          <span className={getStatusClass(item.status)}>
-            {getStatusLabel(item.status)}
-          </span>
+      <div className="recent-item-content">
+        <div className="recent-item-name">{item.name}</div>
+        <div className="recent-item-meta">
+          <span>{t("card.participants", { count: item.participants_count })}</span>
+          <span>{t("sidebar.comments", { count: item.comments_count })}</span>
+          {item.language && <span>{String(item.language).toUpperCase()}</span>}
+          <span className={getStatusClass(item.status)}>{getStatusLabel(item.status, t)}</span>
         </div>
       </div>
+    </Link>
+  );
+}
+
+function MaterialRecentItem({ record, t }) {
+  const material = record.material || {};
+  const href = getMaterialUrl(material);
+  const content = (
+    <>
+      <div className="recent-material-icon">{getMaterialBadge(material)}</div>
+      <div className="recent-item-content">
+        <div className="recent-item-name">{getMaterialTitle(material, t("profile.material"))}</div>
+        <div className="recent-item-meta">
+          <span>{record.competition_name}</span>
+          <span>{getMaterialMeta(material, t)}</span>
+        </div>
+      </div>
+    </>
+  );
+  return href ? (
+    <a className="recent-item recent-material-item" href={href} target="_blank" rel="noreferrer">
+      {content}
+    </a>
+  ) : (
+    <div className="recent-item recent-material-item disabled">
+      {content}
     </div>
   );
 }
 
-function SavedCard({ item, onSavedChange }) {
+function SavedCard({ item, onSavedChange, t }) {
   const [saving, setSaving] = useState(false);
 
   const handleRemove = async () => {
@@ -85,66 +100,98 @@ function SavedCard({ item, onSavedChange }) {
 
   return (
     <div className="sidebar-card">
-      <div
+      <Link
+        to={`/competitions/${item.id}`}
         className="sidebar-card-cover"
-        style={
-          item.cover_image
-            ? { backgroundImage: `url(${item.cover_image})` }
-            : undefined
-        }
+        style={item.cover_image ? { backgroundImage: `url(${item.cover_image})` } : undefined}
+        aria-label={t("sidebar.openCompetition", { name: item.name })}
       />
       <div className="sidebar-card-info">
         <div className="sidebar-card-name-row">
-          <div className="sidebar-card-name">{item.name}</div>
+          <Link to={`/competitions/${item.id}`} className="sidebar-card-name">{item.name}</Link>
           <button
             type="button"
             className="sidebar-heart-btn saved"
             onClick={handleRemove}
-            aria-label="Remove from saved"
-            title="Remove from saved"
+            aria-label={t("card.removeSaved")}
+            title={t("card.removeSaved")}
             disabled={saving}
           >
             <HeartIcon />
           </button>
         </div>
         <div className="sidebar-card-meta">
-          <span>👤 {item.participants_count}</span>
-          <span>💬 {item.comments_count}</span>
-          <span className={getStatusClass(item.status)}>
-            {getStatusLabel(item.status)}
-          </span>
+          <span>{t("card.participants", { count: item.participants_count })}</span>
+          <span>{t("sidebar.comments", { count: item.comments_count })}</span>
+          {item.language && <span>{String(item.language).toUpperCase()}</span>}
+          <span className={getStatusClass(item.status)}>{getStatusLabel(item.status, t)}</span>
         </div>
       </div>
     </div>
   );
 }
 
+function uniqueById(items = []) {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (!item?.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function uniqueMaterialRecords(records = []) {
+  const seen = new Set();
+  return records.filter((record) => {
+    const key = record?.material?.id || record?.id;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function RightSidebar({ data, onSavedChange }) {
+  const { t } = useLanguage();
+
   if (!data) return null;
+
+  const recentlyViewed = uniqueById(data.recently_viewed || data.last_competitions || []);
+  const recentMaterials = uniqueMaterialRecords(data.recent_materials || []);
 
   return (
     <aside className="right-sidebar">
       <section className="right-panel-block">
-        <h3>Last Competitions</h3>
+        <h3>{t("sidebar.recentlyViewed")}</h3>
         <div className="last-competitions-list">
-          {data.last_competitions.map((item) => (
-            <BannerItem key={item.id} item={item} />
-          ))}
+          {recentlyViewed.length === 0 && recentMaterials.length === 0 ? (
+            <div className="sidebar-empty">{t("sidebar.emptyRecent")}</div>
+          ) : (
+            <>
+              {recentlyViewed.length > 0 && (
+                <>
+                  <div className="recent-section-title">{t("sidebar.competitions")}</div>
+                  {recentlyViewed.map((item) => <CompetitionRecentItem key={`competition-${item.id}`} item={item} t={t} />)}
+                </>
+              )}
+              {recentMaterials.length > 0 && (
+                <>
+                  <div className="recent-section-title">{t("sidebar.materials")}</div>
+                  {recentMaterials.map((record) => <MaterialRecentItem key={`material-${record.material?.id || record.id}`} record={record} t={t} />)}
+                </>
+              )}
+            </>
+          )}
         </div>
       </section>
 
       <section className="right-panel-block">
-        <h3>Saved</h3>
+        <h3>{t("sidebar.saved")}</h3>
         <div className="sidebar-list">
-          {data.saved_competitions.length === 0 ? (
-            <div className="sidebar-empty">No saved competitions yet.</div>
+          {(data.saved_competitions || []).length === 0 ? (
+            <div className="sidebar-empty">{t("sidebar.emptySaved")}</div>
           ) : (
-            data.saved_competitions.map((item) => (
-              <SavedCard
-                key={item.id}
-                item={item}
-                onSavedChange={onSavedChange}
-              />
+            (data.saved_competitions || []).map((item) => (
+              <SavedCard key={item.id} item={item} onSavedChange={onSavedChange} t={t} />
             ))
           )}
         </div>

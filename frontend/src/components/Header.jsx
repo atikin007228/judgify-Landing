@@ -1,64 +1,70 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import AccountSwitcher from "./AccountSwitcher";
+import BrandLogo from "./BrandLogo";
 
 export default function Header({
   search,
   onSearchChange,
   onOpenSignUp,
   onOpenSignIn,
+  showSearch,
 }) {
-  const { user, logout, isAuthenticated } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    setMenuOpen(false);
-  };
+  const { isAuthenticated } = useAuth();
+  const { language, setLanguage, supportedLanguages, t } = useLanguage();
+  const shouldShowSearch = Boolean(showSearch || onSearchChange);
 
   return (
     <header className="landing-header">
-      <div className="menu-btn">---</div>
+      <Link className="app-logo-link" to="/" aria-label={t("header.goHome")}>
+        <BrandLogo className="app-logo-brand" showText />
+      </Link>
 
-      <div className="search-wrap">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Search"
-          value={search || ""}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-        />
-      </div>
+      {shouldShowSearch ? (
+        <div className="search-wrap">
+          <input
+            className="search-input"
+            type="text"
+            placeholder={t("header.search")}
+            value={search || ""}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+          />
+        </div>
+      ) : (
+        <div className="header-spacer" aria-hidden="true" />
+      )}
 
       <div className="header-actions">
-        <button className="lang-btn">🌐 en</button>
+        <div className="language-switcher" aria-label={t("header.language")}>
+          {supportedLanguages.map((item) => (
+            <button
+              key={item.code}
+              type="button"
+              className={`lang-btn ${language === item.code ? "active" : ""}`}
+              onClick={() => setLanguage(item.code)}
+              aria-pressed={language === item.code}
+              title={item.name}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
         {!isAuthenticated ? (
           <div className="auth-actions-group">
             <button className="auth-btn" onClick={onOpenSignUp}>
-              Sign Up
+              {t("header.signUp")}
             </button>
             <button className="auth-btn" onClick={onOpenSignIn}>
-              Sign In
+              {t("header.signIn")}
             </button>
           </div>
         ) : (
-          <div className="avatar-menu-wrapper">
-            <button
-              className="profile-btn"
-              onClick={() => setMenuOpen((prev) => !prev)}
-            >
-              {user?.displayName?.[0] || user?.username?.[0] || "👤"}
-            </button>
-
-            {menuOpen && (
-              <div className="account-dropdown">
-                <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                  Profile
-                </Link>
-                <button onClick={handleLogout}>Logout</button>
-              </div>
-            )}
+          <div className="signed-header-actions">
+            <Link className="profile-direct-link" to="/profile">{t("header.profile")}</Link>
+            <AccountSwitcher />
           </div>
         )}
       </div>

@@ -13,7 +13,6 @@ export default function CompetitionTabContent({
   onScoreSubmit,
   onSubmissionCreate,
   onScoreDelete,
-  onJudgeAssignmentRespond,
 }) {
   if (activeTab === "participants") {
     return <ParticipantsTab competition={competition} />;
@@ -30,7 +29,6 @@ export default function CompetitionTabContent({
         onScoreSubmit={onScoreSubmit}
         onSubmissionCreate={onSubmissionCreate}
         onScoreDelete={onScoreDelete}
-        onJudgeAssignmentRespond={onJudgeAssignmentRespond}
       />
     );
   }

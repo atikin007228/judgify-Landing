@@ -1,8 +1,5 @@
 import { apiRequest } from "./client";
 
-const landingFiltersCache = new Map();
-const landingFiltersPromises = new Map();
-
 function buildQuery(params = {}) {
   const searchParams = new URLSearchParams();
 
@@ -17,25 +14,8 @@ function buildQuery(params = {}) {
   return searchParams.toString();
 }
 
-export function fetchLandingFilters(language = "en") {
-  const cacheKey = language === "uk" ? "uk" : "en";
-  if (landingFiltersCache.has(cacheKey)) return Promise.resolve(landingFiltersCache.get(cacheKey));
-  if (!landingFiltersPromises.has(cacheKey)) {
-    landingFiltersPromises.set(cacheKey, apiRequest(`/landing/filters/?lang=${cacheKey}`)
-      .then((data) => {
-        landingFiltersCache.set(cacheKey, data);
-        return data;
-      })
-      .finally(() => {
-        landingFiltersPromises.delete(cacheKey);
-      }));
-  }
-  return landingFiltersPromises.get(cacheKey);
-}
-
-export function clearLandingFiltersCache() {
-  landingFiltersCache.clear();
-  landingFiltersPromises.clear();
+export function fetchLandingFilters() {
+  return apiRequest("/landing/filters/");
 }
 
 export function fetchCompetitions(filters = {}) {
@@ -68,10 +48,9 @@ export function fetchCompetitionSubmissions(id) {
 }
 
 export function submitCompetitionWork(id, payload = {}) {
-  const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
   return apiRequest(`/competitions/${id}/submissions/`, {
     method: "POST",
-    body: isFormData ? payload : JSON.stringify(payload),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -85,13 +64,6 @@ export function submitCompetitionScore(id, payload = {}) {
 export function deleteCompetitionScore(id) {
   return apiRequest(`/competition-scores/${id}/`, {
     method: "DELETE",
-  });
-}
-
-export function respondJudgeAssignment(id, decision) {
-  return apiRequest(`/judge-assignments/${id}/respond/`, {
-    method: "POST",
-    body: JSON.stringify({ decision }),
   });
 }
 

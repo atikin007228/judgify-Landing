@@ -47,8 +47,6 @@ def build_file_download_url(user_file, request=None):
 
 
 class CompetitionRoundSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
-
     class Meta:
         model = CompetitionRound
         fields = [
@@ -70,8 +68,6 @@ class CompetitionSubmissionSettingsSerializer(serializers.ModelSerializer):
 
 
 class CompetitionJudgingCriterionSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
-
     class Meta:
         model = CompetitionJudgingCriterion
         fields = [
@@ -81,8 +77,6 @@ class CompetitionJudgingCriterionSerializer(serializers.ModelSerializer):
 
 
 class CompetitionAwardSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
-
     class Meta:
         model = CompetitionAward
         fields = ["id", "title", "place", "issue_certificate", "issue_badge", "description"]
@@ -155,13 +149,6 @@ class CompetitionBuilderSerializer(serializers.ModelSerializer):
         judging_ends_at = data.get("judging_ends_at")
         results_public_at = data.get("results_public_at")
 
-        if starts_at and not judging_starts_at:
-            attrs["judging_starts_at"] = starts_at
-            judging_starts_at = starts_at
-        if ends_at and not judging_ends_at:
-            attrs["judging_ends_at"] = ends_at
-            judging_ends_at = ends_at
-
         errors = {}
 
         if starts_at and ends_at and ends_at <= starts_at:
@@ -174,6 +161,8 @@ class CompetitionBuilderSerializer(serializers.ModelSerializer):
         if registration_starts_at and registration_ends_at and registration_ends_at <= registration_starts_at:
             errors["registration_ends_at"] = "Registration end must be later than registration start."
 
+        if judging_starts_at and ends_at and judging_starts_at < ends_at:
+            errors["judging_starts_at"] = "Judging cannot start before the competition ends."
         if judging_starts_at and judging_ends_at and judging_ends_at <= judging_starts_at:
             errors["judging_ends_at"] = "Judging end must be later than judging start."
         if results_public_at and judging_ends_at and results_public_at < judging_ends_at:
@@ -242,35 +231,10 @@ class CompetitionBuilderSerializer(serializers.ModelSerializer):
 
     def _sync_nested(self, competition, nested):
         if nested.get("rounds") is not None:
-            round_items = nested["rounds"] or [{"title": "Round 1", "description": "", "sort_order": 0}]
-            existing_rounds = {round_obj.id: round_obj for round_obj in competition.rounds.all()}
-            seen_round_ids = set()
-            for index, item in enumerate(round_items):
-                item = item.copy()
-                round_id = item.pop("id", None)
+            competition.rounds.all().delete()
+            for index, item in enumerate(nested["rounds"]):
                 item.setdefault("sort_order", index)
-                if round_id and round_id in existing_rounds:
-                    round_obj = existing_rounds[round_id]
-                    for key, value in item.items():
-                        setattr(round_obj, key, value)
-                    round_obj.save()
-                    seen_round_ids.add(round_obj.id)
-                else:
-                    round_obj = CompetitionRound.objects.create(competition=competition, **item)
-                    seen_round_ids.add(round_obj.id)
-
-            removable_rounds = [round_obj for round_id, round_obj in existing_rounds.items() if round_id not in seen_round_ids]
-            blocked_rounds = [
-                round_obj.title
-                for round_obj in removable_rounds
-                if round_obj.submissions.exists() or round_obj.scores.exists() or round_obj.judge_assignments.exists()
-            ]
-            if blocked_rounds:
-                raise serializers.ValidationError({
-                    "rounds": f"Cannot delete rounds with submissions, scores, or judge assignments: {', '.join(blocked_rounds)}."
-                })
-            for round_obj in removable_rounds:
-                round_obj.delete()
+                CompetitionRound.objects.create(competition=competition, **item)
 
             rounds = list(competition.rounds.all())
             competition.total_rounds = max(1, len(rounds))
@@ -289,52 +253,15 @@ class CompetitionBuilderSerializer(serializers.ModelSerializer):
             )
 
         if nested.get("judging_criteria") is not None:
-            existing_criteria = {criterion.id: criterion for criterion in competition.judging_criteria.all()}
-            seen_criterion_ids = set()
+            competition.judging_criteria.all().delete()
             for index, item in enumerate(nested["judging_criteria"]):
-                item = item.copy()
-                criterion_id = item.pop("id", None)
                 item.setdefault("sort_order", index)
-                if criterion_id and criterion_id in existing_criteria:
-                    criterion = existing_criteria[criterion_id]
-                    for key, value in item.items():
-                        setattr(criterion, key, value)
-                    criterion.save()
-                    seen_criterion_ids.add(criterion.id)
-                else:
-                    criterion = CompetitionJudgingCriterion.objects.create(competition=competition, **item)
-                    seen_criterion_ids.add(criterion.id)
-
-            removable_criteria = [
-                criterion for criterion_id, criterion in existing_criteria.items()
-                if criterion_id not in seen_criterion_ids
-            ]
-            blocked_criteria = [criterion.title for criterion in removable_criteria if criterion.scores.exists()]
-            if blocked_criteria:
-                raise serializers.ValidationError({
-                    "judging_criteria": f"Cannot delete criteria with existing scores: {', '.join(blocked_criteria)}."
-                })
-            for criterion in removable_criteria:
-                criterion.delete()
+                CompetitionJudgingCriterion.objects.create(competition=competition, **item)
 
         if nested.get("awards") is not None:
-            existing_awards = {award.id: award for award in competition.awards.all()}
-            seen_award_ids = set()
+            competition.awards.all().delete()
             for item in nested["awards"]:
-                item = item.copy()
-                award_id = item.pop("id", None)
-                if award_id and award_id in existing_awards:
-                    award = existing_awards[award_id]
-                    for key, value in item.items():
-                        setattr(award, key, value)
-                    award.save()
-                    seen_award_ids.add(award.id)
-                else:
-                    award = CompetitionAward.objects.create(competition=competition, **item)
-                    seen_award_ids.add(award.id)
-            for award_id, award in existing_awards.items():
-                if award_id not in seen_award_ids:
-                    award.delete()
+                CompetitionAward.objects.create(competition=competition, **item)
 
 
 class CompetitionMaterialSerializer(serializers.ModelSerializer):
@@ -777,6 +704,8 @@ class UserCompetitionWatchSerializer(serializers.ModelSerializer):
 
 
 class SidebarCompetitionSerializer(serializers.ModelSerializer):
+    comments_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Competition
         fields = [
@@ -790,8 +719,12 @@ class SidebarCompetitionSerializer(serializers.ModelSerializer):
             "language",
         ]
 
+    def get_comments_count(self, obj):
+        return CompetitionAnnouncementComment.objects.filter(announcement__competition=obj).count()
+
 
 class CompetitionCardSerializer(serializers.ModelSerializer):
+    comments_count = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     event_type_label = serializers.CharField(source="get_event_type_display", read_only=True)
     participation_type_label = serializers.CharField(
@@ -809,6 +742,7 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
     user_team = serializers.SerializerMethodField()
     can_join = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
+    rounds = CompetitionRoundSerializer(many=True, read_only=True)
 
     class Meta:
         model = Competition
@@ -862,6 +796,7 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "judging_ends_at",
             "results_public_at",
             "timer_deadline",
+            "rounds",
             "is_saved",
             "is_watching",
             "user_participation_status",
@@ -897,9 +832,10 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def get_comments_count(self, obj):
+        return CompetitionAnnouncementComment.objects.filter(announcement__competition=obj).count()
+
     def get_is_saved(self, obj):
-        if "saved_competition_ids" in self.context:
-            return obj.id in self.context["saved_competition_ids"]
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
@@ -910,8 +846,6 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_is_watching(self, obj):
-        if "watched_competition_ids" in self.context:
-            return obj.id in self.context["watched_competition_ids"]
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
@@ -974,9 +908,6 @@ class CompetitionCardSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             role = getattr(getattr(request.user, "profile", None), "primary_role", "")
             if role != "participant" or request.user.is_staff:
-                return False
-            membership = self._membership(obj)
-            if membership and membership.role == "judge":
                 return False
         if obj.access_mode == "invite_only":
             return False
@@ -1114,6 +1045,9 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def get_comments_count(self, obj):
+        return CompetitionAnnouncementComment.objects.filter(announcement__competition=obj).count()
+
     def get_is_saved(self, obj):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
@@ -1135,16 +1069,12 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
         ).exists()
 
     def _membership(self, obj):
-        if "membership_by_competition" in self.context:
-            return self.context["membership_by_competition"].get(obj.id)
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
         return CompetitionParticipant.objects.filter(competition=obj, user=request.user).select_related("team").first()
 
     def _join_request(self, obj):
-        if "join_request_by_competition" in self.context:
-            return self.context["join_request_by_competition"].get(obj.id)
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
@@ -1181,13 +1111,8 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
     def get_can_join(self, obj):
         request = self.context.get("request")
         if request and request.user.is_authenticated:
-            role = self.context.get("user_primary_role")
-            if role is None:
-                role = getattr(getattr(request.user, "profile", None), "primary_role", "")
+            role = getattr(getattr(request.user, "profile", None), "primary_role", "")
             if role != "participant" or request.user.is_staff:
-                return False
-            membership = self._membership(obj)
-            if membership and membership.role == "judge":
                 return False
         if obj.access_mode == "invite_only":
             return False
@@ -1196,14 +1121,10 @@ class CompetitionDetailSerializer(serializers.ModelSerializer):
         return self.get_user_participation_status(obj) in ["none", "rejected", "withdrawn"]
 
     def get_can_edit(self, obj):
-        if "editable_competition_ids" in self.context:
-            return obj.id in self.context["editable_competition_ids"]
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
-        role = self.context.get("user_primary_role")
-        if role is None:
-            role = getattr(getattr(request.user, "profile", None), "primary_role", "")
+        role = getattr(getattr(request.user, "profile", None), "primary_role", "")
         if request.user.is_staff or role == "admin":
             return True
         if role != "organizer":

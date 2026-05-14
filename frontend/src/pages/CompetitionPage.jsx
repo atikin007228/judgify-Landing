@@ -7,13 +7,10 @@ import CompetitionSidebar from "../components/competition/CompetitionSidebar";
 import CompetitionTabs from "../components/competition/CompetitionTabs";
 import CompetitionTabContent from "../components/competition/CompetitionTabContent";
 import JoinCompetitionModal from "../components/competition/JoinCompetitionModal";
-import SignUpModal from "../components/SignUpModal";
-import OnboardModal from "../components/auth/OnboardModal";
-import SignInModal from "../components/auth/SignInModal";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
-import { fetchCompetitionDetail, fetchCompetitions, fetchCompetitionParticipants, fetchCompetitionResults, fetchCompetitionJudging, submitCompetitionScore, submitCompetitionWork, deleteCompetitionScore, respondJudgeAssignment } from "../api/landingApi";
+import { fetchCompetitionDetail, fetchCompetitions, fetchCompetitionParticipants, fetchCompetitionResults, fetchCompetitionJudging, submitCompetitionScore, submitCompetitionWork, deleteCompetitionScore } from "../api/landingApi";
 
 function capitalize(value) {
   if (!value) return "";
@@ -92,7 +89,7 @@ export default function CompetitionPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { user, login, isAuthenticated, authSessionKey } = useAuth();
+  const { user } = useAuth();
   const { language, t } = useLanguage();
 
   const [competition, setCompetition] = useState(
@@ -106,16 +103,13 @@ export default function CompetitionPage() {
   const [showJoinModal, setShowJoinModal] = useState(
     searchParams.get("join") === "1"
   );
-  const [authStep, setAuthStep] = useState(null);
-  const [pendingSignUpData, setPendingSignUpData] = useState(null);
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "overview"
   );
 
   const canCurrentUserJoin =
-    isAuthenticated
-      ? user?.primaryRole === "participant" && competition?.can_join !== false
-      : competition?.can_join !== false;
+    user?.primaryRole === "participant" &&
+    competition?.can_join !== false;
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
@@ -127,34 +121,6 @@ export default function CompetitionPage() {
   useEffect(() => {
     setShowJoinModal(searchParams.get("join") === "1");
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!showJoinModal) return;
-    if (!isAuthenticated) {
-      setAuthStep((current) => current || "signin");
-    } else if (authStep === "signin" || authStep === "signup") {
-      setAuthStep(null);
-    }
-  }, [authStep, isAuthenticated, showJoinModal]);
-
-  useEffect(() => {
-    setCompetition((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        can_edit: false,
-        can_join: false,
-        user_participation_status: "none",
-        user_participation_role: "",
-        user_team: null,
-        judging: {
-          ...(prev.judging || {}),
-          judge_workspace: null,
-          my_submissions: [],
-        },
-      };
-    });
-  }, [authSessionKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -216,7 +182,7 @@ export default function CompetitionPage() {
       isMounted = false;
       window.clearInterval(intervalId);
     };
-  }, [authSessionKey, id, location.state, language, t]);
+  }, [id, location.state, language, t]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -231,51 +197,12 @@ export default function CompetitionPage() {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("join", "1");
     setSearchParams(nextParams);
-    if (!isAuthenticated) {
-      setAuthStep("signin");
-    }
   };
 
   const closeJoinModal = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("join");
     setSearchParams(nextParams);
-  };
-
-  const closeAuthFlow = () => {
-    setAuthStep(null);
-    setPendingSignUpData(null);
-    if (!isAuthenticated) {
-      closeJoinModal();
-    }
-  };
-
-  const handleOpenSignUp = () => {
-    setAuthStep("signup");
-  };
-
-  const handleOpenSignIn = () => {
-    setAuthStep("signin");
-  };
-
-  const handleSignInComplete = async (credentials) => {
-    await login(credentials);
-    setAuthStep(null);
-  };
-
-  const handleSignUpComplete = (data) => {
-    setPendingSignUpData(data || null);
-    setAuthStep("onboard");
-  };
-
-  const handleFinishOnboarding = async (data) => {
-    await login({
-      ...(pendingSignUpData || {}),
-      interests: data?.interests || [],
-      createTeam: false,
-    });
-    setPendingSignUpData(null);
-    setAuthStep(null);
   };
 
   const handleJoinSubmitted = async (result) => {
@@ -330,7 +257,6 @@ export default function CompetitionPage() {
         },
         results: {
           ...(prev?.results || {}),
-          leaderboard: response.leaderboard || prev?.results?.leaderboard || [],
           roundScores: response.round_scores || prev?.results?.roundScores || [],
         },
       }, language, t)
@@ -364,22 +290,7 @@ export default function CompetitionPage() {
         },
         results: {
           ...(prev?.results || {}),
-          leaderboard: response.leaderboard || prev?.results?.leaderboard || [],
           roundScores: response.round_scores || prev?.results?.roundScores || [],
-        },
-      }, language, t)
-    );
-    return response;
-  };
-
-  const handleJudgeAssignmentRespond = async (assignmentId, decision) => {
-    const response = await respondJudgeAssignment(assignmentId, decision);
-    setCompetition((prev) =>
-      enrichCompetition({
-        ...prev,
-        judging: {
-          ...(prev?.judging || {}),
-          judge_workspace: response.judge_workspace || prev?.judging?.judge_workspace || null,
         },
       }, language, t)
     );
@@ -432,7 +343,6 @@ export default function CompetitionPage() {
                 onScoreSubmit={handleScoreSubmit}
                 onSubmissionCreate={handleSubmissionCreate}
                 onScoreDelete={handleScoreDelete}
-                onJudgeAssignmentRespond={handleJudgeAssignmentRespond}
               />
             </main>
 
@@ -443,34 +353,13 @@ export default function CompetitionPage() {
         </div>
       </div>
 
-      {showJoinModal && isAuthenticated && canCurrentUserJoin && (
+      {showJoinModal && canCurrentUserJoin && (
         <JoinCompetitionModal
           competition={competition}
           onClose={closeJoinModal}
           onSubmitted={handleJoinSubmitted}
         />
       )}
-
-      {authStep === "signin" && (
-        <SignInModal
-          isOpen={true}
-          onClose={closeAuthFlow}
-          onOpenSignUp={handleOpenSignUp}
-          onComplete={handleSignInComplete}
-        />
-      )}
-
-      {authStep === "signup" && (
-        <SignUpModal
-          isOpen={true}
-          onClose={closeAuthFlow}
-          onOpenSignIn={handleOpenSignIn}
-          onComplete={handleSignUpComplete}
-          allowedRoles={["participant"]}
-        />
-      )}
-
-      {authStep === "onboard" && <OnboardModal onFinish={handleFinishOnboarding} />}
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
-import BrandLogo from "../BrandLogo";
 
 export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete }) {
   const { t } = useLanguage();
   const [form, setForm] = useState({ email: "", password: "" });
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
@@ -23,16 +21,15 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
     }
 
     setBusy(true);
-    setError("");
     try {
-      const email = form.email.trim().toLowerCase();
       await onComplete?.({
-        email,
-        password: form.password,
+        email: form.email,
+        accountKey: `email:${form.email}:participant`,
+        username: `${form.email.split("@")[0] || "demo_user"}_participant`,
+        displayName: form.email.split("@")[0] || "Demo User",
+        primaryRole: "participant",
       });
       onClose?.();
-    } catch (submitError) {
-      setError(submitError?.message || t("auth.signInFailed", { defaultValue: "Could not sign in." }));
     } finally {
       setBusy(false);
     }
@@ -40,7 +37,6 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
 
   const handleDemoLogin = async (role = "organizer") => {
     setBusy(true);
-    setError("");
     try {
       const demoUsers = {
         organizer: {
@@ -61,27 +57,19 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
 
       await onComplete?.(demoUsers[role] || demoUsers.organizer);
       onClose?.();
-    } catch (submitError) {
-      setError(submitError?.message || t("auth.signInFailed", { defaultValue: "Could not sign in." }));
     } finally {
       setBusy(false);
     }
   };
 
-  const handleOverlayMouseDown = (event) => {
-    if (event.target === event.currentTarget) {
-      onClose?.();
-    }
-  };
-
   return (
-    <div className="auth-modal-overlay" onMouseDown={handleOverlayMouseDown}>
-      <div className="auth-modal signin-modal" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="auth-modal-overlay" onClick={onClose}>
+      <div className="auth-modal signin-modal" onClick={(e) => e.stopPropagation()}>
         <button className="auth-modal-close" onClick={onClose} aria-label={t("auth.close")}>
           x
         </button>
 
-        <div className="auth-modal-logo"><BrandLogo className="auth-brand-logo" showText /></div>
+        <div className="auth-modal-logo">Judgify</div>
         <div className="auth-modal-subtitle">{t("auth.welcomeBack")}</div>
         <div className="auth-modal-caption">
           {t("auth.signInCaption")}
@@ -111,7 +99,6 @@ export default function SignInModal({ isOpen, onClose, onOpenSignUp, onComplete 
           <button type="submit" className="create-account-btn" disabled={busy}>
             {busy ? t("auth.signingIn") : t("auth.signInAction")}
           </button>
-          {error && <div className="auth-error-message" role="alert">{error}</div>}
         </form>
 
         <div className="auth-divider">

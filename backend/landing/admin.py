@@ -1,8 +1,7 @@
 from django.contrib import admin
 from .models import (
     Competition, UserSavedCompetition, UserCompetitionWatch,
-    UserProfile, UserFile, RecentlyViewedCompetition, RecentlyViewedMaterial, LandingFilterOption, PlatformSetting,
-    Badge, UserBadge, Certificate, UserMaterial,
+    UserProfile, UserFile, RecentlyViewedCompetition, RecentlyViewedMaterial, Badge, UserBadge, Certificate, UserMaterial,
     CompetitionTeam, CompetitionParticipant, CompetitionJoinRequest,
     CompetitionRound, CompetitionSubmissionSettings, CompetitionJudgingCriterion,
     CompetitionSubmission, CompetitionJudgeAssignment, CompetitionScore,
@@ -60,8 +59,6 @@ admin.site.register(Badge)
 admin.site.register(UserBadge)
 admin.site.register(Certificate)
 admin.site.register(UserMaterial)
-admin.site.register(LandingFilterOption)
-admin.site.register(PlatformSetting)
 
 
 @admin.register(CompetitionTeam)

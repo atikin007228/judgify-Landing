@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 
 function getJoinState(competition, currentUser, t) {
   const role = currentUser?.primaryRole;
-  if (currentUser && role !== "participant") return null;
+  if (role !== "participant") return null;
 
   const status = competition?.user_participation_status || "none";
   const team = competition?.user_team?.name ? ` - ${competition.user_team.name}` : "";
@@ -20,26 +20,17 @@ export default function CompetitionHeader({ competition, onJoin, onEdit }) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const joinState = getJoinState(competition, user, t);
-  const bannerImage = competition.banner_image || competition.cover_image || "";
-  const fallbackImage = competition.cover_image && competition.cover_image !== bannerImage ? competition.cover_image : "";
-  const [coverSrc, setCoverSrc] = useState(bannerImage);
-
-  useEffect(() => {
-    setCoverSrc(bannerImage);
-  }, [bannerImage]);
 
   return (
     <section className="competition-detail-header">
-      <div className="competition-detail-cover">
-        {coverSrc && (
-          <img
-            src={coverSrc}
-            alt=""
-            loading="eager"
-            onError={() => setCoverSrc(fallbackImage)}
-          />
-        )}
-      </div>
+      <div
+        className="competition-detail-cover"
+        style={{
+          backgroundImage: competition.banner_image || competition.cover_image
+            ? `url(${competition.banner_image || competition.cover_image})`
+            : undefined,
+        }}
+      />
 
       <div className="competition-detail-title-row">
         <div>

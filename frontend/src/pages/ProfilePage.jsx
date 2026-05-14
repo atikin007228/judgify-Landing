@@ -5,7 +5,6 @@ import { fetchProfileDashboard, reviewCompetitionCreation, reviewJoinRequest, up
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import AccountSwitcher from "../components/AccountSwitcher";
-import BrandLogo from "../components/BrandLogo";
 import { getFileUrl, getMaterialMeta, getMaterialTitle } from "../utils/materials";
 
 function normalizeRole(role) {
@@ -14,7 +13,6 @@ function normalizeRole(role) {
 }
 
 function getStatusLabel(status, t) {
-  if (!status) return "";
   return t(`options.status.${status}`, { defaultValue: status });
 }
 
@@ -55,15 +53,8 @@ function LastCompetitionBanner({ item, t }) {
 }
 
 function StatsBlock({ role, statsData, onNavigate, t }) {
-  const isAdmin = role === "admin";
-  const isOrganizer = role === "organizer" || isAdmin;
-  const stats = isAdmin
-    ? [
-        { value: statsData?.pending ?? 0, label: "pending" },
-        { value: statsData?.archived ?? 0, label: "archived" },
-        { value: statsData?.judge_assignments ?? 0, label: "judgeAssignments" },
-      ]
-    : isOrganizer
+  const isOrganizer = role === "organizer" || role === "admin";
+  const stats = isOrganizer
     ? [
         { value: statsData?.organized ?? statsData?.active ?? 0, label: "organized" },
         { value: statsData?.pending ?? 0, label: "pending" },
@@ -192,25 +183,6 @@ function CompetitionSection({ title, items = [], savedIds, onSavedChange, emptyT
   );
 }
 
-function NotificationsPanel({ items = [], t }) {
-  return (
-    <section className="right-panel-block profile-notifications-panel">
-      <div className="profile-panel-header"><h2>{t("profile.latestNotifications")}</h2></div>
-      {items.length === 0 ? <div className="profile-empty-state">{t("profile.noNotifications")}</div> : (
-        <div className="profile-notifications-list">
-          {items.map((item) => (
-            <button type="button" className="profile-notification-item" key={item.id} onClick={() => item.competition_id && window.location.assign(`/competitions/${item.competition_id}`)}>
-              <strong>{item.title}</strong>
-              <span>{item.competition_name || item.text || getStatusLabel(item.status, t)}</span>
-              <small>{getStatusLabel(item.status, t)}</small>
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 function AwardAccordion({ title, count, items = [], emptyText, t }) {
   const latest = items[0];
   const latestHref = getFileUrl(latest?.file);
@@ -295,33 +267,6 @@ function PendingRequestsPanel({ role, requests = [], onReview, t }) {
   );
 }
 
-function JudgeWorkPanel({ items = [], t }) {
-  const navigate = useNavigate();
-  if (!items.length) return null;
-  return (
-    <section className="profile-panel profile-judge-work-panel">
-      <h2>{t("profile.judgeWork")}</h2>
-      <div className="profile-resource-list">
-        {items.map((item) => (
-          <button
-            type="button"
-            className="profile-resource-item profile-pending-open"
-            key={item.id}
-            onClick={() => navigate(`/competitions/${item.competition_id}?tab=judging`)}
-          >
-            <strong>{item.competition_name}</strong>
-            <span>
-              {item.round_title ? `${item.round_title} - ` : ""}
-              {getStatusLabel(item.status, t)}
-            </span>
-            <small>{t("profile.judgeScores", { count: item.scores_count || 0, final: item.finalized_count || 0 })}</small>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ProfileEditForm({ user, onSave, t }) {
   const [draft, setDraft] = useState(() => ({
     displayName: user?.displayName || user?.username || "",
@@ -384,7 +329,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [editing, setEditing] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [savedCompetitions, setSavedCompetitions] = useState([]);
   const [savedIds, setSavedIds] = useState(() => new Set());
   const [profileStats, setProfileStats] = useState(null);
   const [profileBadges, setProfileBadges] = useState([]);
@@ -395,8 +339,6 @@ export default function ProfilePage() {
   const [activeCompetitions, setActiveCompetitions] = useState([]);
   const [archivedCompetitions, setArchivedCompetitions] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [judgeWork, setJudgeWork] = useState([]);
-  const [notifications, setNotifications] = useState([]);
 
   const role = normalizeRole(user?.primaryRole);
 
@@ -405,7 +347,6 @@ export default function ProfilePage() {
     const saved = dashboard?.saved_competitions || [];
     const ids = new Set(saved.map((item) => item.id));
     setSavedIds(ids);
-    setSavedCompetitions(mergeSavedState(saved, ids));
     setRecentlyViewed(mergeSavedState(dashboard?.recently_viewed || [], ids));
     setDraftCompetitions(dashboard?.draft_competitions || []);
     setPendingRequests(dashboard?.pending_requests || []);
@@ -416,8 +357,6 @@ export default function ProfilePage() {
     setProfileBadges(dashboard?.badges || []);
     setProfileCertificates(dashboard?.certificates || []);
     setProfileMaterials(dashboard?.materials || []);
-    setJudgeWork(dashboard?.judge_work || []);
-    setNotifications(dashboard?.notifications || []);
   };
 
   useEffect(() => {
@@ -427,7 +366,6 @@ export default function ProfilePage() {
       if (cancelled) return;
       const ids = new Set((dashboard?.saved_competitions || []).map((item) => item.id));
       setSavedIds(ids);
-      setSavedCompetitions(mergeSavedState(dashboard?.saved_competitions || [], ids));
       setRecentlyViewed(mergeSavedState(dashboard?.recently_viewed || [], ids));
       setDraftCompetitions(dashboard?.draft_competitions || []);
       setPendingRequests(dashboard?.pending_requests || []);
@@ -438,8 +376,6 @@ export default function ProfilePage() {
       setProfileBadges(dashboard?.badges || []);
       setProfileCertificates(dashboard?.certificates || []);
       setProfileMaterials(dashboard?.materials || []);
-      setJudgeWork(dashboard?.judge_work || []);
-      setNotifications(dashboard?.notifications || []);
     }).catch(console.error);
     return () => { cancelled = true; };
   }, [isAuthenticated]);
@@ -448,7 +384,6 @@ export default function ProfilePage() {
     setSavedIds((prev) => { const next = new Set(prev); if (nextSaved) next.add(competitionId); else next.delete(competitionId); return next; });
     const patch = (items) => items.map((competition) => competition.id === competitionId ? { ...competition, is_saved: nextSaved } : competition);
     setRecentlyViewed(patch);
-    setSavedCompetitions(patch);
     setActiveCompetitions(patch);
     setArchivedCompetitions(patch);
   };
@@ -471,7 +406,7 @@ export default function ProfilePage() {
     { id: "overview", label: t("profile.overview") },
     ...(role !== "viewer" ? [{ id: "pending", label: t("profile.pending") }] : []),
     { id: "archived", label: t("profile.archivedTab") },
-    ...(role === "organizer" ? [{ id: "drafts", label: t("profile.myCompetitions") }] : []),
+    ...(role === "organizer" || role === "admin" ? [{ id: "drafts", label: t("profile.myCompetitions") }] : []),
   ];
 
   if (loading) return <div className="profile-dashboard-page"><main className="profile-dashboard-shell"><div className="profile-loading-panel">{t("profile.loading")}</div></main></div>;
@@ -483,7 +418,8 @@ export default function ProfilePage() {
         <div className="profile-topbar">
           <button className="profile-back-btn" type="button" onClick={() => navigate(-1)}>{"<"}</button>
           <button className="profile-logo-link" type="button" onClick={() => navigate("/")} aria-label={t("profile.goHome")}>
-            <BrandLogo className="profile-logo-brand" showText />
+            <span className="app-logo-mark" aria-hidden="true"><svg viewBox="0 0 64 64" role="img" focusable="false"><path d="M19 10c-5.1 3.4-8.1 8.9-8.1 15.1 0 8.6 6 14.1 13.5 21l7.6 7 7.6-7c7.5-6.9 13.5-12.4 13.5-21 0-6.2-3-11.7-8.1-15.1-4.8-3.2-11.5-2.5-15.2 1.7L32 13.6l1.7-1.9C30 7.5 23.8 6.8 19 10Z" /><path d="M22.3 19.5c-2 1.5-3.1 3.7-3.1 6.2 0 4 2.9 6.7 7.2 10.6l5.6 5.1 5.6-5.1c4.3-3.9 7.2-6.6 7.2-10.6 0-2.5-1.1-4.7-3.1-6.2-2.4-1.8-5.7-1.5-7.7.7L32 22.4l-2-2.2c-2-2.2-5.3-2.5-7.7-.7Z" /></svg></span>
+            <span>Judgify</span>
           </button>
           <div className="profile-search"><span>{"⌕"}</span><input placeholder={t("profile.search")} /></div>
           <AccountSwitcher compact />
@@ -503,8 +439,8 @@ export default function ProfilePage() {
 
             {editing && <ProfileEditForm user={user} t={t} onSave={async (patch) => { try { const result = await updateProfileDashboard(patch); updateProfile(result?.user || patch); } catch (error) { console.error(error); updateProfile(patch); } setEditing(false); }} />}
 
-            {role === "organizer" && activeTab === "overview" && <CreateCompetitionPanel t={t} />}
-            {role === "organizer" && activeTab === "drafts" && <DraftsPanel items={draftCompetitions} t={t} />}
+            {(role === "organizer" || role === "admin") && activeTab === "overview" && <CreateCompetitionPanel t={t} />}
+            {(role === "organizer" || role === "admin") && activeTab === "drafts" && <DraftsPanel items={draftCompetitions} t={t} />}
             {activeTab === "pending" && <PendingRequestsPanel role={role} requests={pendingRequests} onReview={handleReview} t={t} />}
 
             {role === "participant" && activeTab === "overview" && (
@@ -512,7 +448,6 @@ export default function ProfilePage() {
                 <StatsBlock role={role} statsData={profileStats} onNavigate={setActiveTab} t={t} />
                 <CompetitionSection title={t("profile.registeredCompetitions")} items={activeCompetitions} savedIds={savedIds} onSavedChange={handleSavedChange} emptyText={t("profile.noRegistered")} t={t} />
                 <CompetitionSection title={t("profile.archivedCompetitions")} items={archivedCompetitions} savedIds={savedIds} onSavedChange={handleSavedChange} emptyText={t("profile.noArchived")} t={t} />
-                <JudgeWorkPanel items={judgeWork} t={t} />
                 <TeamAccessPanel teams={teams} currentUserId={user?.id} onManageTeam={handleManageTeam} t={t} />
                 <BadgesCertificatesPanel badges={profileBadges} certificates={profileCertificates} stats={profileStats} t={t} />
               </>
@@ -521,17 +456,13 @@ export default function ProfilePage() {
             {(role === "organizer" || role === "admin") && activeTab === "overview" && (
               <>
                 <StatsBlock role={role} statsData={profileStats} t={t} />
-                <JudgeWorkPanel items={judgeWork} t={t} />
                 <TeamAccessPanel teams={teams} currentUserId={user?.id} onManageTeam={handleManageTeam} t={t} />
-                {role !== "admin" && <BadgesCertificatesPanel badges={profileBadges} certificates={profileCertificates} stats={profileStats} t={t} />}
+                <BadgesCertificatesPanel badges={profileBadges} certificates={profileCertificates} stats={profileStats} t={t} />
               </>
             )}
 
             {role === "viewer" && activeTab === "overview" && (
-              <>
-                <section className="profile-panel profile-viewer-note"><h2>{t("profile.viewerProfile")}</h2><p>{t("profile.viewerText")}</p></section>
-                <CompetitionSection title={t("profile.savedCompetitions")} items={savedCompetitions} savedIds={savedIds} onSavedChange={handleSavedChange} emptyText={t("profile.noSaved")} t={t} />
-              </>
+              <section className="profile-panel profile-viewer-note"><h2>{t("profile.viewerProfile")}</h2><p>{t("profile.viewerText")}</p></section>
             )}
 
             {activeTab === "archived" && <CompetitionSection title={t("profile.archivedCompetitions")} items={archivedCompetitions} savedIds={savedIds} onSavedChange={handleSavedChange} emptyText={t("profile.noArchived")} t={t} />}
@@ -542,9 +473,8 @@ export default function ProfilePage() {
               <div className="profile-panel-header"><h2>{t("profile.recentlyViewed")}</h2></div>
               <div className="last-competitions-list">{recentlyViewed.slice(0, role === "viewer" ? 6 : 4).map((item) => <LastCompetitionBanner key={item.id} item={item} t={t} />)}</div>
             </section>
-            <NotificationsPanel items={notifications} t={t} />
             {role !== "viewer" && activeTab !== "overview" && <StatsBlock role={role} statsData={profileStats} onNavigate={setActiveTab} t={t} />}
-            {role === "participant" && profileMaterials.length > 0 && (
+            {(role === "participant" || role === "admin") && profileMaterials.length > 0 && (
               <section className="profile-panel"><h2>{t("profile.personalMaterials")}</h2><div className="profile-resource-list">{profileMaterials.map((item) => {
                 const href = getFileUrl(item.file);
                 const title = getMaterialTitle(item, t("profile.material"));

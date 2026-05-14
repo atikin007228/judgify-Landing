@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import FiltersSidebar from "../components/FiltersSidebar";
 import CompetitionTabs from "../components/CompetitionTabs";
@@ -19,21 +19,13 @@ import { useLanguage } from "../context/LanguageContext";
 
 const initialFilters = {
   search: "",
-  tab: "registration_open",
+  tab: "active",
+  status: [],
   event_type: [],
   participation_type: [],
   industry: [],
   difficulty: [],
   language: [],
-};
-
-const statusTabs = {
-  registration_open: ["registration_open"],
-  active: ["active"],
-  judging: ["judging"],
-  upcoming: ["upcoming", "published"],
-  finished: ["finished"],
-  archived: ["archived"],
 };
 
 function mergeSavedState(items, savedIds) {
@@ -43,141 +35,15 @@ function mergeSavedState(items, savedIds) {
   }));
 }
 
-function toTime(value) {
-  if (!value) return null;
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : null;
-}
-
-function isWithin(start, end, now) {
-  return Boolean(start && end && start <= now && now <= end);
-}
-
-function deriveTimedCompetition(item, now) {
-  if (!item || ["draft", "archived"].includes(item.status)) return item;
-
-  const startsAt = toTime(item.starts_at);
-  const endsAt = toTime(item.ends_at);
-  const registrationStartsAt = toTime(item.registration_starts_at);
-  const registrationEndsAt = toTime(item.registration_ends_at);
-  const judgingStartsAt = toTime(item.judging_starts_at);
-  const judgingEndsAt = toTime(item.judging_ends_at);
-  const resultsPublicAt = toTime(item.results_public_at);
-
-  const registrationOpen = registrationStartsAt && registrationEndsAt
-    ? registrationStartsAt <= now && now <= registrationEndsAt
-    : registrationEndsAt
-      ? now <= registrationEndsAt
-      : registrationStartsAt
-        ? registrationStartsAt <= now && (!startsAt || now < startsAt)
-        : Boolean(item.registration_open);
-
-  const judgingOpen = isWithin(judgingStartsAt, judgingEndsAt, now);
-  let status = item.status || "upcoming";
-
-  if (status === "judging" && judgingOpen) {
-    status = "judging";
-  } else if (startsAt && now < startsAt) {
-    status = registrationOpen ? "registration_open" : "upcoming";
-  } else if (isWithin(startsAt, endsAt, now)) {
-    status = "active";
-  } else if (judgingOpen) {
-    status = "judging";
-  } else if (endsAt && now > endsAt) {
-    if (judgingStartsAt && now < judgingStartsAt) {
-      status = "judging";
-    } else if (judgingEndsAt && now <= judgingEndsAt) {
-      status = "judging";
-    } else {
-      status = "finished";
-    }
-  }
-
-  let timerDeadline = null;
-  if (status === "registration_open") timerDeadline = item.registration_ends_at || item.starts_at;
-  else if (status === "upcoming") timerDeadline = item.starts_at;
-  else if (status === "active") timerDeadline = item.timer_deadline || item.ends_at;
-  else if (status === "judging") timerDeadline = item.judging_ends_at || item.results_public_at;
-  else if (status === "finished") timerDeadline = resultsPublicAt && resultsPublicAt > now ? item.results_public_at : null;
-
-  return {
-    ...item,
-    status,
-    timer_deadline: timerDeadline,
-    registration_open: registrationOpen,
-    submissions_open: status === "active" ? item.submissions_open : false,
-  };
-}
-
-function LandingSkeleton({ withSidebar = false }) {
-  return (
-    <div className={`competition-grid landing-loading-grid ${withSidebar ? "with-sidebar" : ""}`} aria-hidden="true">
-      <div className="cards-grid landing-skeleton-grid">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div className="landing-skeleton-card" key={index}>
-            <div className="landing-skeleton-cover" />
-            <div className="landing-skeleton-line wide" />
-            <div className="landing-skeleton-line" />
-            <div className="landing-skeleton-line short" />
-          </div>
-        ))}
-      </div>
-      {withSidebar && (
-        <aside className="right-sidebar landing-skeleton-sidebar">
-          <div className="landing-skeleton-panel" />
-          <div className="landing-skeleton-panel short" />
-        </aside>
-      )}
-    </div>
-  );
-}
-
-function useDebouncedValue(value, delay = 250) {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(value), delay);
-    return () => window.clearTimeout(timer);
-  }, [value, delay]);
-
-  return debounced;
-}
-
-function usePageTicker(intervalMs = 1000) {
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const tick = () => {
-      if (document.visibilityState === "visible") {
-        setNow(Date.now());
-      }
-    };
-    const timer = window.setInterval(tick, intervalMs);
-    window.addEventListener("focus", tick);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("focus", tick);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [intervalMs]);
-
-  return now;
-}
-
 export default function LandingPage() {
-  const { user, login, isAuthenticated, authSessionKey } = useAuth();
-  const { language, t } = useLanguage();
+  const { user, login, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const [filters, setFilters] = useState(initialFilters);
-  const debouncedSearch = useDebouncedValue(filters.search, 250);
   const [filterOptions, setFilterOptions] = useState(null);
   const [competitions, setCompetitions] = useState([]);
   const [sidebarData, setSidebarData] = useState(null);
   const [savedIds, setSavedIds] = useState(() => new Set());
-  const savedIdsRef = useRef(savedIds);
-  const loadSeqRef = useRef(0);
-  const now = usePageTicker(1000);
   const [loading, setLoading] = useState(false);
 
   const [authStep, setAuthStep] = useState(null);
@@ -185,56 +51,39 @@ export default function LandingPage() {
 
   const requestFilters = useMemo(
     () => ({
-      search: debouncedSearch,
+      search: filters.search,
       tab: filters.tab,
+      status: filters.status,
       event_type: filters.event_type,
       participation_type: filters.participation_type,
       industry: filters.industry,
       difficulty: filters.difficulty,
       language: filters.language,
     }),
-    [debouncedSearch, filters.tab, filters.event_type, filters.participation_type, filters.industry, filters.difficulty, filters.language]
+    [filters]
   );
 
-  const timedCompetitions = useMemo(
-    () => competitions.map((item) => deriveTimedCompetition(item, now)),
-    [competitions, now]
-  );
-
-  const displayedCompetitions = useMemo(() => {
-    const tabStatuses = statusTabs[filters.tab] || statusTabs.registration_open;
-    return timedCompetitions.filter((item) => tabStatuses.includes(item.status));
-  }, [filters.tab, timedCompetitions]);
-
   useEffect(() => {
-    fetchLandingFilters(language).then(setFilterOptions).catch(console.error);
-  }, [language]);
-
-  useEffect(() => {
-    savedIdsRef.current = savedIds;
-  }, [savedIds]);
+    fetchLandingFilters().then(setFilterOptions).catch(console.error);
+  }, []);
 
   const refreshCompetitions = useCallback(async ({ showLoader = false } = {}) => {
-    const seq = ++loadSeqRef.current;
     if (showLoader) setLoading(true);
     try {
       const data = await fetchCompetitions(requestFilters);
-      if (seq !== loadSeqRef.current) return;
       setCompetitions((prev) => {
-        const localSaved = isAuthenticated ? new Set(savedIdsRef.current) : new Set();
-        if (isAuthenticated) {
-          prev.forEach((item) => {
-            if (item.is_saved) localSaved.add(item.id);
-          });
-        }
+        const localSaved = new Set(savedIds);
+        prev.forEach((item) => {
+          if (item.is_saved) localSaved.add(item.id);
+        });
         return mergeSavedState(data, localSaved);
       });
     } catch (error) {
       console.error(error);
     } finally {
-      if (showLoader && seq === loadSeqRef.current) setLoading(false);
+      if (showLoader) setLoading(false);
     }
-  }, [isAuthenticated, requestFilters]);
+  }, [requestFilters, savedIds]);
 
   useEffect(() => {
     let cancelled = false;
@@ -246,40 +95,18 @@ export default function LandingPage() {
 
     initialLoad();
     const intervalId = window.setInterval(() => {
-      if (!cancelled && document.visibilityState === "visible") {
-        refreshCompetitions({ showLoader: false });
-      }
-    }, 60000);
+      if (!cancelled) refreshCompetitions({ showLoader: false });
+    }, 5000);
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [authSessionKey, refreshCompetitions]);
+  }, [refreshCompetitions]);
 
   useEffect(() => {
-    const currentTime = Date.now();
-    const nearestDeadline = competitions.reduce((nearest, item) => {
-      const deadline = toTime(item.timer_deadline);
-      if (!deadline || deadline <= currentTime) return nearest;
-      return Math.min(nearest, deadline);
-    }, Number.POSITIVE_INFINITY);
-
-    if (!Number.isFinite(nearestDeadline)) return undefined;
-
-    const delay = Math.max(500, Math.min(nearestDeadline - currentTime + 1200, 60000));
-    const timer = window.setTimeout(() => {
-      if (document.visibilityState === "visible") {
-        refreshCompetitions({ showLoader: false });
-      }
-    }, delay);
-
-    return () => window.clearTimeout(timer);
-  }, [competitions, refreshCompetitions]);
-
-  useEffect(() => {
-    setCompetitions((prev) => mergeSavedState(prev, isAuthenticated ? savedIds : new Set()));
-  }, [isAuthenticated, savedIds]);
+    setCompetitions((prev) => mergeSavedState(prev, savedIds));
+  }, [savedIds]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -288,12 +115,8 @@ export default function LandingPage() {
       return;
     }
 
-    let cancelled = false;
-    setSidebarData(null);
-    setSavedIds(new Set());
     fetchSidebar()
       .then((data) => {
-        if (cancelled) return;
         const savedList = (data?.saved_competitions || []).slice(0, 6);
         setSidebarData({
           ...data,
@@ -302,10 +125,7 @@ export default function LandingPage() {
         setSavedIds(new Set(savedList.map((item) => item.id)));
       })
       .catch(console.error);
-    return () => {
-      cancelled = true;
-    };
-  }, [authSessionKey, isAuthenticated]);
+  }, [isAuthenticated]);
 
   const handleToggleFilter = (groupName, value) => {
     setFilters((prev) => {
@@ -356,8 +176,7 @@ export default function LandingPage() {
       setPendingSignUpData(null);
       setAuthStep(null);
     } catch (error) {
-      console.error("Failed to complete account registration", error);
-      alert(error?.message || t("auth.registrationFailed", { defaultValue: "Could not create account." }));
+      console.error("Failed to complete demo login", error);
     }
   };
 
@@ -442,27 +261,21 @@ export default function LandingPage() {
           />
 
           {loading ? (
-            <LandingSkeleton withSidebar={isAuthenticated} />
+            <div>{t("landing.loading")}</div>
           ) : (
             <div
-              className={`competition-grid landing-results-enter ${
+              className={`competition-grid ${
                 isAuthenticated ? "with-sidebar" : ""
               }`}
             >
               <div className="cards-grid">
-                {displayedCompetitions.map((item) => (
+                {competitions.map((item) => (
                   <CompetitionCard
                     key={item.id}
                     item={item}
-                    now={now}
                     onSavedChange={handleSavedChange}
                   />
                 ))}
-                {!displayedCompetitions.length && (
-                  <div className="landing-empty-state">
-                    {t("landing.empty", { defaultValue: "No competitions in this tab yet." })}
-                  </div>
-                )}
               </div>
 
               {isAuthenticated && (

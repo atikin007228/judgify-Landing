@@ -35,21 +35,40 @@ const demoAccounts = [
   },
 ];
 
+const PROFILE_STORAGE_KEY = "judgify_profile_state";
+
+function readStoredAccounts() {
+  try {
+    const store = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || "{}");
+    return Object.values(store)
+      .filter((item) => item && (item.username || item.email || item.displayName))
+      .map((item) => ({
+        accountKey: item.accountKey || (item.id ? `id:${item.id}` : `local:${item.username || item.email}`),
+        id: item.id,
+        email: item.email || "",
+        username: item.username || (item.email ? item.email.split("@")[0] : item.displayName),
+        displayName: item.displayName || item.username || item.email || "User",
+        primaryRole: item.primaryRole || "participant",
+        avatarUrl: item.avatarUrl || item.avatar_url || item.avatar?.url || item.links?.avatarDataUrl || "",
+      }));
+  } catch {
+    return [];
+  }
+}
+
 function uniqueAccounts(accounts) {
   const seen = new Set();
   return accounts.filter((account) => {
+    const username = (account.username || "").trim().toLowerCase();
     const email = (account.email || "").trim().toLowerCase();
     const role = (account.primaryRole || "participant").trim().toLowerCase();
-    const username = (account.username || "").trim().toLowerCase();
-    const accountKey = String(account.accountKey || "");
-    const identityKeys = [
-      email ? `email:${email}:role:${role}` : "",
-      username ? `username:${username}` : "",
-      accountKey || "",
-      account.displayName ? `name:${String(account.displayName).trim().toLowerCase()}:role:${role}` : "",
-    ].filter(Boolean);
-    if (!identityKeys.length || identityKeys.some((key) => seen.has(key))) return false;
-    identityKeys.forEach((key) => seen.add(key));
+    const key = username
+      ? `username:${username}`
+      : email
+        ? `email:${email}:role:${role}`
+        : account.accountKey || account.displayName;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }
@@ -69,8 +88,8 @@ function Avatar({ user, t, className = "account-avatar" }) {
   return <span className={className}>{initials(user, t)}</span>;
 }
 
-function AccountMenu({ user, canAdmin, onAdmin, onProfile, onSwitchAccount, onLogout, style, menuRef, t }) {
-  const switchableAccounts = uniqueAccounts([...(user ? [user] : []), ...demoAccounts]);
+function AccountMenu({ user, onProfile, onSwitchAccount, onLogout, style, menuRef, t }) {
+  const switchableAccounts = uniqueAccounts([...(user ? [user] : []), ...readStoredAccounts(), ...demoAccounts]);
   const roleLabel = (role) => t(`roles.${role || "participant"}`, { defaultValue: role || "participant" });
 
   return (
@@ -87,38 +106,22 @@ function AccountMenu({ user, canAdmin, onAdmin, onProfile, onSwitchAccount, onLo
       <button type="button" className="account-profile-link" onClick={onProfile}>
         {t("account.openProfile")}
       </button>
-      {canAdmin && (
-        <button type="button" className="account-profile-link secondary" onClick={onAdmin}>
-          {t("account.adminPanel", { defaultValue: "Admin panel" })}
-        </button>
-      )}
 
       <div className="account-menu-divider" />
       <span className="account-menu-caption">{t("account.switchAccount")}</span>
       {switchableAccounts.map((account) => {
-        const accountEmail = (account.email || "").trim().toLowerCase();
-        const userEmail = (user?.email || "").trim().toLowerCase();
-        const accountRole = account.primaryRole || "participant";
-        const userRole = user?.primaryRole || "participant";
-        const isCurrent =
-          account.accountKey === user?.accountKey ||
-          (account.id && account.id === user?.id) ||
-          (accountEmail && accountEmail === userEmail && accountRole === userRole);
-        const isDemoAccount = String(account.accountKey || "").startsWith("demo:");
-        const requiresPassword = !isCurrent && !isDemoAccount;
+        const isCurrent = account.accountKey === user?.accountKey || account.username === user?.username;
         return (
           <button
             type="button"
             className={`account-switch-row ${isCurrent ? "active" : ""}`}
             key={account.accountKey || account.username}
             onClick={() => onSwitchAccount(account)}
-            disabled={requiresPassword}
-            title={requiresPassword ? t("account.signInRequired", { defaultValue: "Sign in with password to switch to this account." }) : undefined}
           >
             <span>{account.displayName.slice(0, 1)}</span>
             <div>
               <strong>{account.displayName}</strong>
-              <small>{requiresPassword ? t("account.signInRequired", { defaultValue: "Sign in with password to switch to this account." }) : `${roleLabel(account.primaryRole)} - ${account.email}`}</small>
+              <small>{roleLabel(account.primaryRole)} - {account.email}</small>
             </div>
             {isCurrent && <em>OK</em>}
           </button>
@@ -141,7 +144,6 @@ export default function AccountSwitcher({ compact = false }) {
   const [menuStyle, setMenuStyle] = useState({});
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
-  const canAdmin = Boolean(user?.primaryRole === "admin" || user?.isStaff || user?.isSuperuser);
 
   const updateMenuPosition = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -180,9 +182,6 @@ export default function AccountSwitcher({ compact = false }) {
   }, [open]);
 
   const switchAccount = async (account) => {
-    if (!String(account.accountKey || "").startsWith("demo:")) {
-      return;
-    }
     await login(account);
     setOpen(false);
   };
@@ -195,11 +194,6 @@ export default function AccountSwitcher({ compact = false }) {
 
   const handleProfile = () => {
     navigate("/profile");
-    setOpen(false);
-  };
-
-  const handleAdmin = () => {
-    navigate("/admin");
     setOpen(false);
   };
 
@@ -219,10 +213,8 @@ export default function AccountSwitcher({ compact = false }) {
       {open && createPortal(
         <AccountMenu
           user={user}
-          canAdmin={canAdmin}
           style={menuStyle}
           menuRef={menuRef}
-          onAdmin={handleAdmin}
           onProfile={handleProfile}
           onSwitchAccount={switchAccount}
           onLogout={handleLogout}

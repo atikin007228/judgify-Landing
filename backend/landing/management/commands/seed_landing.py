@@ -5,7 +5,6 @@ import zipfile
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-from django.utils.text import slugify
 from django.utils import timezone
 
 from landing.models import (
@@ -166,7 +165,7 @@ class Command(BaseCommand):
         self._create_admin_pending_proposal(now)
         self._create_rounds_and_schedule(competitions, now)
         self._create_materials(competitions, demo_users["organizer"])
-        self._create_saved_and_recent(competitions, demo_users["participant"], demo_users["viewer"])
+        self._create_saved_and_recent(competitions, demo_users["participant"])
         self._create_team_memberships_and_pending_requests(competitions, demo_users, fake_users)
         self._refresh_competition_counters(competitions)
         self._create_awards_and_certificates(competitions, demo_users, fake_users)
@@ -230,7 +229,7 @@ class Command(BaseCommand):
         UserBadge.objects.filter(user__username__in=usernames).delete()
         UserFile.objects.filter(owner__username__in=usernames, storage_key__startswith="demo/certificates/").delete()
 
-    def _create_competitions(self, now, upsert=False):
+    def _create_competitions(self, now):
         data = [
             {
                 "name": "AI Battle 2026",
@@ -410,193 +409,16 @@ class Command(BaseCommand):
                 "views_count": 1650,
                 "followers_count": 390,
             },
-            {
-                "name": "Cloud DevOps Arena",
-                "short_description": "Active infrastructure automation challenge",
-                "cover_image": "https://picsum.photos/seed/cloud-devops-arena/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1600&auto=format&fit=crop",
-                "status": "active",
-                "event_type": "online",
-                "participation_type": "team",
-                "industry": "programming",
-                "difficulty": "advanced",
-                "language": "en",
-                "total_rounds": 4,
-                "comments_count": 54,
-                "views_count": 690,
-                "followers_count": 118,
-                "registration_open": False,
-                "submissions_open": True,
-                "is_online_now": True,
-            },
-            {
-                "name": "No-Code Impact Jam",
-                "short_description": "Active product challenge for civic tools",
-                "cover_image": "https://picsum.photos/seed/no-code-impact-jam/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=1600&auto=format&fit=crop",
-                "status": "active",
-                "event_type": "hybrid",
-                "participation_type": "mixed",
-                "industry": "design",
-                "difficulty": "beginner",
-                "language": "uk",
-                "total_rounds": 3,
-                "comments_count": 33,
-                "views_count": 510,
-                "followers_count": 77,
-                "registration_open": False,
-                "submissions_open": True,
-            },
-            {
-                "name": "Math Modeling League",
-                "short_description": "Active applied modeling tournament",
-                "cover_image": "https://picsum.photos/seed/math-modeling-league/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&auto=format&fit=crop",
-                "status": "active",
-                "event_type": "online",
-                "participation_type": "team",
-                "industry": "programming",
-                "difficulty": "mixed",
-                "language": "en",
-                "total_rounds": 5,
-                "comments_count": 72,
-                "views_count": 840,
-                "followers_count": 166,
-                "registration_open": False,
-                "submissions_open": True,
-            },
-            {
-                "name": "Data Viz Open Registration",
-                "short_description": "Open registration for visual analytics teams",
-                "cover_image": "https://picsum.photos/seed/data-viz-open-registration/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&auto=format&fit=crop",
-                "status": "registration_open",
-                "event_type": "online",
-                "participation_type": "individual",
-                "industry": "design",
-                "difficulty": "intermediate",
-                "language": "uk",
-                "total_rounds": 3,
-                "comments_count": 17,
-                "views_count": 310,
-                "followers_count": 46,
-                "registration_open": True,
-                "submissions_open": False,
-            },
-            {
-                "name": "Embedded Systems Cup",
-                "short_description": "Upcoming hardware and firmware contest",
-                "cover_image": "https://picsum.photos/seed/embedded-systems-cup/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=1600&auto=format&fit=crop",
-                "status": "upcoming",
-                "event_type": "offline",
-                "participation_type": "team",
-                "industry": "robotics",
-                "difficulty": "advanced",
-                "language": "en",
-                "total_rounds": 4,
-                "comments_count": 22,
-                "views_count": 430,
-                "followers_count": 88,
-            },
-            {
-                "name": "UX Research Challenge",
-                "short_description": "Upcoming research sprint for product teams",
-                "cover_image": "https://picsum.photos/seed/ux-research-challenge/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&auto=format&fit=crop",
-                "status": "upcoming",
-                "event_type": "hybrid",
-                "participation_type": "team",
-                "industry": "design",
-                "difficulty": "intermediate",
-                "language": "uk",
-                "total_rounds": 3,
-                "comments_count": 11,
-                "views_count": 270,
-                "followers_count": 52,
-            },
-            {
-                "name": "Secure API Review",
-                "short_description": "Judging stage for backend security submissions",
-                "cover_image": "https://picsum.photos/seed/secure-api-review/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?w=1600&auto=format&fit=crop",
-                "status": "judging",
-                "event_type": "online",
-                "participation_type": "individual",
-                "industry": "cybersecurity",
-                "difficulty": "advanced",
-                "language": "en",
-                "total_rounds": 4,
-                "comments_count": 95,
-                "views_count": 940,
-                "followers_count": 214,
-            },
-            {
-                "name": "Robotics Pitch Review",
-                "short_description": "Judging stage for robotics demos",
-                "cover_image": "https://picsum.photos/seed/robotics-pitch-review/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=1600&auto=format&fit=crop",
-                "status": "judging",
-                "event_type": "hybrid",
-                "participation_type": "team",
-                "industry": "robotics",
-                "difficulty": "mixed",
-                "language": "uk",
-                "total_rounds": 3,
-                "comments_count": 64,
-                "views_count": 730,
-                "followers_count": 142,
-            },
-            {
-                "name": "Accessibility Design Finals",
-                "short_description": "Recently finished accessibility design contest",
-                "cover_image": "https://picsum.photos/seed/accessibility-design-finals/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&auto=format&fit=crop",
-                "status": "finished",
-                "event_type": "online",
-                "participation_type": "team",
-                "industry": "design",
-                "difficulty": "mixed",
-                "language": "uk",
-                "total_rounds": 3,
-                "comments_count": 77,
-                "views_count": 780,
-                "followers_count": 133,
-            },
-            {
-                "name": "Archive: Data Marathon 2025",
-                "short_description": "Archived benchmark event for historical comparison",
-                "cover_image": "https://picsum.photos/seed/data-marathon-archive/900/500",
-                "banner_image": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1600&auto=format&fit=crop",
-                "status": "archived",
-                "event_type": "online",
-                "participation_type": "individual",
-                "industry": "programming",
-                "difficulty": "advanced",
-                "language": "en",
-                "total_rounds": 5,
-                "comments_count": 118,
-                "views_count": 1320,
-                "followers_count": 260,
-            },
         ]
 
         competitions = []
         for item in data:
-            defaults = {
-                "is_public": True,
-                "show_in_catalog": True,
-                "organizer_approval_status": "approved",
+            competitions.append(Competition.objects.create(
+                is_public=True,
+                show_in_catalog=True,
+                organizer_approval_status="approved",
                 **item,
-            }
-            if upsert:
-                competition, _ = Competition.objects.update_or_create(
-                    slug=slugify(item["name"]),
-                    defaults=defaults,
-                )
-                competitions.append(competition)
-            else:
-                competitions.append(Competition.objects.create(**defaults))
+            ))
         return competitions
 
     def _assign_all_competitions_to_demo_organizer(self, competitions, organizer_user):
@@ -652,13 +474,11 @@ class Command(BaseCommand):
         )
 
     def _create_rounds_and_schedule(self, competitions, now):
-        next_month = (now.replace(day=28) + timedelta(days=4)).replace(day=1, hour=23, minute=59, second=59, microsecond=0)
-        month_end = next_month - timedelta(days=1)
         for index, comp in enumerate(competitions):
             if comp.status == "active":
                 round_count = max(comp.total_rounds, 3)
                 start_at = now - timedelta(minutes=random.randint(25, 95))
-                end_at = month_end
+                end_at = now + timedelta(hours=random.randint(4, 8))
                 self._apply_round_windows(comp, start_at, end_at, round_count, now, stream_enabled=index < 2)
                 comp.registration_starts_at = start_at - timedelta(days=2)
                 comp.registration_ends_at = start_at - timedelta(minutes=5)
@@ -670,9 +490,9 @@ class Command(BaseCommand):
 
             if comp.status == "registration_open":
                 round_count = max(comp.total_rounds, 3)
-                registration_end = now + timedelta(days=2, hours=random.randint(4, 10))
+                registration_end = now + timedelta(hours=random.randint(4, 10))
                 start_at = registration_end + timedelta(minutes=15)
-                end_at = month_end
+                end_at = start_at + timedelta(hours=random.randint(8, 24))
                 self._apply_round_windows(comp, start_at, end_at, round_count, now)
                 comp.registration_starts_at = now - timedelta(hours=2)
                 comp.registration_ends_at = registration_end
@@ -686,7 +506,7 @@ class Command(BaseCommand):
 
             if comp.status == "upcoming":
                 start_at = now + timedelta(days=2, hours=index)
-                end_at = month_end
+                end_at = start_at + timedelta(days=2)
                 self._apply_round_windows(comp, start_at, end_at, max(comp.total_rounds, 3), now)
                 comp.registration_starts_at = now + timedelta(hours=6)
                 comp.registration_ends_at = start_at - timedelta(hours=2)
@@ -697,12 +517,12 @@ class Command(BaseCommand):
 
             if comp.status == "judging":
                 start_at = now - timedelta(days=1)
-                end_at = month_end
+                end_at = now - timedelta(hours=2)
                 self._apply_round_windows(comp, start_at, end_at, max(comp.total_rounds, 3), now)
                 comp.current_round = comp.total_rounds
-                comp.timer_deadline = month_end
+                comp.timer_deadline = now + timedelta(hours=4)
                 comp.judging_starts_at = now - timedelta(hours=1)
-                comp.judging_ends_at = month_end
+                comp.judging_ends_at = now + timedelta(hours=4)
                 comp.submissions_open = False
                 comp.save()
                 continue
@@ -739,22 +559,19 @@ class Command(BaseCommand):
                 active_deadline = cursor
 
             is_stream_round = bool(stream_enabled and cursor <= now <= next_cursor)
-            CompetitionRound.objects.update_or_create(
+            CompetitionRound.objects.create(
                 competition=comp,
+                title=f"Round {round_number}",
+                description="Demo stage with sequential deadlines.",
+                starts_at=cursor,
+                ends_at=next_cursor,
+                submission_required=True,
+                max_attempts=round_number,
+                is_stream_enabled=is_stream_round,
+                stream_url="https://www.youtube.com/watch?v=jfKfPfyJRdk" if is_stream_round else "",
+                stream_embed_url="https://www.youtube.com/embed/jfKfPfyJRdk" if is_stream_round else "",
+                stream_label="Demo live stream" if is_stream_round else "",
                 sort_order=round_index,
-                defaults={
-                    "title": f"Round {round_number}",
-                    "description": "Demo stage with sequential deadlines.",
-                    "starts_at": cursor,
-                    "ends_at": next_cursor,
-                    "status": "draft",
-                    "submission_required": True,
-                    "max_attempts": round_number,
-                    "is_stream_enabled": is_stream_round,
-                    "stream_url": "https://www.youtube.com/watch?v=jfKfPfyJRdk" if is_stream_round else "",
-                    "stream_embed_url": "https://www.youtube.com/embed/jfKfPfyJRdk" if is_stream_round else "",
-                    "stream_label": "Demo live stream" if is_stream_round else "",
-                },
             )
             cursor = next_cursor
 
@@ -830,17 +647,13 @@ class Command(BaseCommand):
                 starter_material.url = ""
                 starter_material.save(update_fields=["file", "url"])
 
-    def _create_saved_and_recent(self, competitions, participant_user, viewer_user=None):
+    def _create_saved_and_recent(self, competitions, participant_user):
         for comp in competitions[:4]:
             UserSavedCompetition.objects.get_or_create(user=participant_user, competition=comp)
             RecentlyViewedCompetition.objects.get_or_create(user=participant_user, competition=comp)
             material = comp.materials.order_by("sort_order", "id").first()
             if material:
                 RecentlyViewedMaterial.objects.get_or_create(user=participant_user, material=material)
-        if viewer_user:
-            for comp in competitions[1:6]:
-                UserSavedCompetition.objects.get_or_create(user=viewer_user, competition=comp)
-                RecentlyViewedCompetition.objects.get_or_create(user=viewer_user, competition=comp)
 
     def _create_team_memberships_and_pending_requests(self, competitions, demo_users, fake_users):
         participant_user = demo_users["participant"]
@@ -1010,9 +823,7 @@ class Command(BaseCommand):
             )
             badges.append(badge)
 
-        award_users = [user for user, _ in fake_users] + [
-            user for key, user in demo_users.items() if key != "admin"
-        ]
+        award_users = [user for user, _ in fake_users] + list(demo_users.values())
         for idx, award_user in enumerate(award_users):
             for offset, badge in enumerate(badges[: 2 + (idx % 3)]):
                 UserBadge.objects.get_or_create(

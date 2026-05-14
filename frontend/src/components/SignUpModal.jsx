@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 
 const roleOptions = [
@@ -15,31 +15,13 @@ const initialForm = {
   primaryRole: "participant",
 };
 
-function isStrongPassword(password, email) {
-  const emailName = email.split("@")[0] || "";
-  return (
-    password.length >= 12 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /\d/.test(password) &&
-    /[^A-Za-z0-9]/.test(password) &&
-    (!emailName || !password.toLowerCase().includes(emailName.toLowerCase()))
-  );
-}
-
 export default function SignUpModal({
   isOpen,
   onClose,
   onOpenSignIn,
   onComplete,
-  allowedRoles,
 }) {
   const { t } = useLanguage();
-  const displayedRoleOptions = useMemo(() => {
-    if (!Array.isArray(allowedRoles) || !allowedRoles.length) return roleOptions;
-    return roleOptions.filter((role) => allowedRoles.includes(role.id));
-  }, [allowedRoles]);
-  const defaultRole = displayedRoleOptions[0]?.id || "participant";
   const [form, setForm] = useState(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -58,10 +40,7 @@ export default function SignUpModal({
   const handleCreateAccount = (e) => {
     e.preventDefault();
 
-    const email = form.email.trim().toLowerCase();
-    const username = form.username.trim();
-
-    if (!username || !email || !form.password || !form.confirmPassword) {
+    if (!form.username || !form.email || !form.password || !form.confirmPassword) {
       alert(t("auth.fillRequired"));
       return;
     }
@@ -71,25 +50,11 @@ export default function SignUpModal({
       return;
     }
 
-    if (!isStrongPassword(form.password, email)) {
-      alert(t("auth.passwordStrengthHint", {
-        defaultValue: "Use at least 12 characters with uppercase, lowercase, number and symbol. Do not include your email name.",
-      }));
-      return;
-    }
-
-    const primaryRole = displayedRoleOptions.some((role) => role.id === form.primaryRole)
-      ? form.primaryRole
-      : defaultRole;
-
     onComplete?.({
-      register: true,
-      username,
-      email,
-      accountKey: `email:${email}:${primaryRole}`,
-      displayName: username,
-      password: form.password,
-      primaryRole,
+      username: form.username,
+      email: form.email,
+      displayName: form.username,
+      primaryRole: form.primaryRole,
     });
   };
 
@@ -98,15 +63,9 @@ export default function SignUpModal({
     onOpenSignIn?.();
   };
 
-  const handleOverlayMouseDown = (event) => {
-    if (event.target === event.currentTarget) {
-      handleClose();
-    }
-  };
-
   return (
-    <div className="auth-modal-overlay signup-screen" onMouseDown={handleOverlayMouseDown}>
-      <div className="auth-modal signup-panel" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="auth-modal-overlay signup-screen" onClick={handleClose}>
+      <div className="auth-modal signup-panel" onClick={(e) => e.stopPropagation()}>
         <button className="auth-modal-close" onClick={handleClose} aria-label={t("auth.close")}>
           x
         </button>
@@ -177,7 +136,7 @@ export default function SignUpModal({
           <div className="signup-role-block">
             <div className="signup-role-label">{t("auth.rolePrompt")}</div>
             <div className="signup-role-list" role="radiogroup" aria-label={t("auth.chooseRole")}>
-              {displayedRoleOptions.map((role) => (
+              {roleOptions.map((role) => (
                 <button
                   key={role.id}
                   type="button"

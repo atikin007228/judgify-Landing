@@ -14,41 +14,16 @@ function optionLabel(t, group, value) {
 
 function SubmissionPanel({ competition, judging, onSubmissionCreate }) {
   const { t } = useLanguage();
-  const openSubmissionRounds = useMemo(() => {
-    const rounds = Array.isArray(competition.rounds) ? competition.rounds : [];
-    const activeRounds = rounds.filter((round) => round.status === "active" && round.submission_required !== false);
-    if (activeRounds.length) return activeRounds;
-    const currentRound = Number(competition.current_round || 0);
-    return rounds.filter((round, index) => index + 1 === currentRound && round.submission_required !== false);
-  }, [competition.current_round, competition.rounds]);
   const canSubmit =
     competition.user_participation_status === "approved" &&
     ["participant", "team_member"].includes(competition.user_participation_role) &&
-    competition.submissions_open &&
-    openSubmissionRounds.length > 0;
+    competition.submissions_open;
   const mySubmissions = judging?.my_submissions || [];
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    repository_url: "",
-    demo_url: "",
-    round_id: "",
-    file: null,
-  });
-  const [fileInputKey, setFileInputKey] = useState(0);
+  const [form, setForm] = useState({ title: "", description: "", repository_url: "", demo_url: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
-
-  useEffect(() => {
-    if (!openSubmissionRounds.length) return;
-    setForm((prev) => (
-      prev.round_id && openSubmissionRounds.some((round) => String(round.id) === String(prev.round_id))
-        ? prev
-        : { ...prev, round_id: String(openSubmissionRounds[0].id) }
-    ));
-  }, [openSubmissionRounds]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -56,25 +31,8 @@ function SubmissionPanel({ competition, judging, onSubmissionCreate }) {
     setSaving(true);
     setMessage("");
     try {
-      const payload = form.file ? new FormData() : { ...form };
-      if (form.file) {
-        payload.append("title", form.title);
-        payload.append("description", form.description);
-        payload.append("repository_url", form.repository_url);
-        payload.append("demo_url", form.demo_url);
-        payload.append("round_id", form.round_id);
-        payload.append("file", form.file);
-      }
-      await onSubmissionCreate(payload);
-      setForm((prev) => ({
-        title: "",
-        description: "",
-        repository_url: "",
-        demo_url: "",
-        round_id: prev.round_id,
-        file: null,
-      }));
-      setFileInputKey((prev) => prev + 1);
+      await onSubmissionCreate(form);
+      setForm({ title: "", description: "", repository_url: "", demo_url: "" });
       setMessage(t("judgingTab.submissionSent"));
     } catch (error) {
       setMessage(error?.message || t("judgingTab.submissionSaveError"));
@@ -98,13 +56,7 @@ function SubmissionPanel({ competition, judging, onSubmissionCreate }) {
                 <strong>{item.title || item.round_title || t("judgingTab.submissionFallback")}</strong>
                 <small>{item.round_title} - {optionLabel(t, "status", item.status)}</small>
               </div>
-              <span>
-                {item.file?.url ? (
-                  <a href={item.file.url} target="_blank" rel="noreferrer">
-                    {item.file.original_name || t("judgingTab.file", { defaultValue: "File" })}
-                  </a>
-                ) : item.repository_url || item.demo_url || item.description || t("judgingTab.noExternalLink")}
-              </span>
+              <span>{item.repository_url || item.demo_url || item.description || t("judgingTab.noExternalLink")}</span>
             </div>
           ))}
         </div>
@@ -112,11 +64,6 @@ function SubmissionPanel({ competition, judging, onSubmissionCreate }) {
 
       {canSubmit && (
         <form className="submission-form" onSubmit={handleSubmit}>
-          <select value={form.round_id} onChange={(event) => updateField("round_id", event.target.value)}>
-            {openSubmissionRounds.map((round) => (
-              <option key={round.id} value={round.id}>{round.title || t("judgingTab.round")}</option>
-            ))}
-          </select>
           <input
             value={form.title}
             onChange={(event) => updateField("title", event.target.value)}
@@ -137,12 +84,6 @@ function SubmissionPanel({ competition, judging, onSubmissionCreate }) {
             value={form.demo_url}
             onChange={(event) => updateField("demo_url", event.target.value)}
             placeholder={t("judgingTab.demoUrl")}
-          />
-          <input
-            key={fileInputKey}
-            type="file"
-            onChange={(event) => updateField("file", event.target.files?.[0] || null)}
-            aria-label={t("judgingTab.fileUpload", { defaultValue: "Attach file" })}
           />
           <div className="scorecard-actions">
             <button type="submit" disabled={saving}>{saving ? t("judgingTab.sending") : t("judgingTab.submitWork")}</button>
@@ -214,57 +155,6 @@ function ScoreTables({ tables = [] }) {
   );
 }
 
-function JudgeInvitePanel({ workspace, onJudgeAssignmentRespond }) {
-  const { t } = useLanguage();
-  const assignments = workspace?.assignments || [];
-  const invited = assignments.filter((assignment) => assignment.status === "invited");
-  const accepted = assignments.filter((assignment) => ["accepted", "completed"].includes(assignment.status));
-  const [savingId, setSavingId] = useState(null);
-  const [message, setMessage] = useState("");
-
-  if (!assignments.length) return null;
-
-  const respond = async (assignmentId, decision) => {
-    if (!onJudgeAssignmentRespond) return;
-    setSavingId(assignmentId);
-    setMessage("");
-    try {
-      await onJudgeAssignmentRespond(assignmentId, decision);
-      setMessage(decision === "accepted" ? t("judgingTab.inviteAccepted") : t("judgingTab.inviteDeclined"));
-    } catch (error) {
-      setMessage(error?.message || t("judgingTab.inviteResponseError"));
-    } finally {
-      setSavingId(null);
-    }
-  };
-
-  return (
-    <div className="judge-scorecard judge-invite-panel">
-      <div className="judging-round-heading">
-        <h3>{t("judgingTab.judgeInvitations")}</h3>
-        <span>{accepted.length ? t("judgingTab.acceptedAssignments", { count: accepted.length }) : t("judgingTab.waitingForResponse")}</span>
-      </div>
-      {invited.map((assignment) => (
-        <div className="submission-row" key={assignment.id}>
-          <div>
-            <strong>{assignment.round_title || t("judgingTab.allRounds")}</strong>
-            <small>{optionLabel(t, "review_type", assignment.assignment_type)} - {optionLabel(t, "status", assignment.status)}</small>
-          </div>
-          <div className="scorecard-actions compact">
-            <button type="button" disabled={savingId === assignment.id} onClick={() => respond(assignment.id, "accepted")}>
-              {t("judgingTab.acceptInvite")}
-            </button>
-            <button type="button" disabled={savingId === assignment.id} onClick={() => respond(assignment.id, "declined")}>
-              {t("judgingTab.declineInvite")}
-            </button>
-          </div>
-        </div>
-      ))}
-      {message && <div className="judging-message">{message}</div>}
-    </div>
-  );
-}
-
 function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
   const { t } = useLanguage();
   const workspace = judging?.judge_workspace;
@@ -283,7 +173,6 @@ function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
   const [draftScores, setDraftScores] = useState({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const selectedSubject = subjectsForRound.find((subject) => subject.id === subjectId);
 
   const existingScoreMap = useMemo(() => {
     const map = {};
@@ -329,7 +218,7 @@ function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
     setDraftScores(next);
   }, [criteria, existingScoreMap, reviewType, roundId, subjectId]);
 
-  if (!workspace || !criteria.length || !rounds.length || !subjects.length || workspace.can_score === false) {
+  if (!workspace || !criteria.length || !rounds.length || !subjects.length) {
     return null;
   }
 
@@ -429,18 +318,6 @@ function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
       )}
 
       {!!subjectsForRound.length && (
-        <>
-        {selectedSubject && (
-          <div className="judge-material-box">
-            <strong>{selectedSubject.title || selectedSubject.name}</strong>
-            <div>
-              {selectedSubject.file?.url && <a href={selectedSubject.file.url} target="_blank" rel="noreferrer">{selectedSubject.file.original_name || t("judgingTab.file")}</a>}
-              {selectedSubject.repository_url && <a href={selectedSubject.repository_url} target="_blank" rel="noreferrer">{t("judgingTab.repository")}</a>}
-              {selectedSubject.demo_url && <a href={selectedSubject.demo_url} target="_blank" rel="noreferrer">{t("judgingTab.demo")}</a>}
-              {!selectedSubject.file?.url && !selectedSubject.repository_url && !selectedSubject.demo_url && <span>{t("judgingTab.noExternalLink")}</span>}
-            </div>
-          </div>
-        )}
         <div className="judging-table-scroll">
           <table className="judging-score-table scorecard-table">
             <thead>
@@ -493,7 +370,6 @@ function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
             </tbody>
           </table>
         </div>
-        </>
       )}
 
       <div className="scorecard-actions">
@@ -509,7 +385,7 @@ function JudgeScorecard({ judging, onScoreSubmit, onScoreDelete }) {
   );
 }
 
-export default function JudgingTab({ competition, onScoreSubmit, onSubmissionCreate, onScoreDelete, onJudgeAssignmentRespond }) {
+export default function JudgingTab({ competition, onScoreSubmit, onSubmissionCreate, onScoreDelete }) {
   const { t } = useLanguage();
   const judging = competition.judging || {};
   const reviewModes = judging.review_modes || {};
@@ -526,7 +402,6 @@ export default function JudgingTab({ competition, onScoreSubmit, onSubmissionCre
       </div>
 
       <SubmissionPanel competition={competition} judging={judging} onSubmissionCreate={onSubmissionCreate} />
-      <JudgeInvitePanel workspace={judging.judge_workspace} onJudgeAssignmentRespond={onJudgeAssignmentRespond} />
 
       <div className="judging-metric-list">
         {(judging.metrics || []).map((metric) => (
@@ -538,11 +413,6 @@ export default function JudgingTab({ competition, onScoreSubmit, onSubmissionCre
       </div>
 
       <JudgeScorecard judging={judging} onScoreSubmit={onScoreSubmit} onScoreDelete={onScoreDelete} />
-      {judging.judge_workspace && judging.judge_workspace.can_score === false && (
-        <div className="judging-empty">
-          {judging.judge_workspace.judging_window_open ? t("judgingTab.acceptInviteToScore") : t("judgingTab.judgingWindowClosed")}
-        </div>
-      )}
       <ScoreTables tables={roundScores} />
     </section>
   );
